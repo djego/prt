@@ -97,7 +97,7 @@ fn main() -> Result<(), io::Error> {
             match app.input_mode {
                 InputMode::Normal => match key.code {
                     KeyCode::Char('q') => break,
-                    KeyCode::Char('i') => {
+                    KeyCode::Char('e') => {
                         app.enter_edit_mode();
                     }
                     KeyCode::Char('c') => {
@@ -124,8 +124,13 @@ fn main() -> Result<(), io::Error> {
                         current_field.pop();
                     }
                     KeyCode::Enter => {
+                        let current_field_index = app.current_field;
                         let current_field = app.get_current_field_mut();
-                        current_field.push('\n');
+                        if current_field_index == 1 {
+                            current_field.push('\n');
+                        } else {
+                            app.current_field = (app.current_field + 1) % 4;
+                        }
                     }
                     KeyCode::Tab => {
                         app.current_field = (app.current_field + 1) % 4;
@@ -219,7 +224,7 @@ fn ui(f: &mut Frame, app: &App) {
 
     // Instrucciones
     let instructions = match app.input_mode {
-        InputMode::Normal => "Press 'i' to edit Title, 'c' to create PR, 'q' to quit",
+        InputMode::Normal => "Press 'e' to edit Title, 'c' to create PR, 'q' to quit",
         InputMode::Editing => "Editing mode. Press 'Esc' to exit, 'Tab' to move to next field",
         InputMode::Creating => "PR Created! Press 'n' to create a new PR",
     };
