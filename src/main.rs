@@ -3,6 +3,10 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use octocrab::models::pulls::PullRequest as OctocrabPullRequest;
+use octocrab::Error as OctocrabError;
+use octocrab::Octocrab;
+
 use ratatui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -12,6 +16,7 @@ use ratatui::{
     Frame, Terminal,
 };
 use std::io;
+use thiserror::Error;
 
 struct PullRequest {
     title: String,
@@ -24,6 +29,18 @@ enum InputMode {
     Normal,
     Editing,
     Creating,
+}
+
+#[derive(Debug, Error)]
+enum PullRequestError {
+    #[error("GitHub API error: {0}")]
+    ApiError(#[from] OctocrabError),
+
+    #[error("Validation failed")]
+    PullRequestValidationFailed(String),
+
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
 }
 
 struct App {
@@ -63,7 +80,7 @@ impl App {
         self.current_field = 0;
     }
 
-    fn create_pull_request(&mut self) {
+    fn preview_pull_request(&mut self) {
         self.input_mode = InputMode::Creating;
         self.show_popup = true;
     }
@@ -78,6 +95,55 @@ impl App {
         self.input_mode = InputMode::Normal;
         self.current_field = 0;
         self.show_popup = false;
+    }
+
+    async fn create_github_pull_request(&self) -> Result<OctocrabPullRequest, PullRequestError> {
+        let github_token = std::env::var("GITHUB_TOKEN").expect("GitHub token not set");
+        let octocrab = Octocrab::builder().personal_token(github_token).build()?;
+        let repo_owner = "djego";
+        let repo_name = "exchange-rate-next";
+
+        if self.pull_request.source_branch.is_empty() {
+            return Err(PullRequestError::InvalidInput(
+                "Source branch is empty".to_string(),
+            ));
+        }
+        if self.pull_request.target_branch.is_empty() {
+            return Err(PullRequestError::InvalidInput(
+                "Target branch is empty".to_string(),
+            ));
+        }
+
+        let pr_result = octocrab
+            .pulls(repo_owner, repo_name)
+            .create(
+                &self.pull_request.title,         // Título del PR
+                &self.pull_request.source_branch, // Rama de origen
+                &self.pull_request.target_branch, // Rama de destino
+            )
+            .body(&self.pull_request.description) // Descripción del PR
+            .send()
+            .await;
+
+        match pr_result {
+            Ok(pr) => Ok(pr),
+            Err(e) => {
+                // Extraer detalles del error
+                if let OctocrabError::GitHub { source, .. } = &e {
+                    match source.status_code.as_u16() {
+                        // Detectar si ya existe el PR
+                        422 => {
+                            return Err(PullRequestError::PullRequestValidationFailed(
+                                e.to_string(),
+                            ));
+                        }
+                        _ => Err(PullRequestError::ApiError(e)),
+                    }
+                } else {
+                    Err(PullRequestError::ApiError(e))
+                }
+            }
+        }
     }
 }
 
@@ -101,7 +167,7 @@ fn main() -> Result<(), io::Error> {
                         app.enter_edit_mode();
                     }
                     KeyCode::Char('c') => {
-                        app.create_pull_request();
+                        app.preview_pull_request();
                     }
                     KeyCode::Down => {
                         app.current_field = (app.current_field + 1) % 4;
@@ -138,6 +204,31 @@ fn main() -> Result<(), io::Error> {
                     _ => {}
                 },
                 InputMode::Creating => match key.code {
+                    KeyCode::Enter => {
+                        app.show_popup = false;
+                        let result = tokio::runtime::Runtime::new()
+                            .unwrap()
+                            .block_on(app.create_github_pull_request());
+
+                        match result {
+                            Ok(pr) => {
+                                let url_str = match pr.html_url {
+                                    Some(ref url) => url.to_string(),
+                                    None => "No URL available".to_string(),
+                                };
+                                println!("Pull request created successfully! \n Url: {}", url_str);
+                                app.show_popup = false; // Ocultar popup o actualizar estado
+                                app.reset(); // Resetear el formulario después de crear el PR
+                            }
+                            Err(e) => {
+                                println!("Failed to create pull request: {}", e);
+                                // Podrías mostrar un mensaje de error en el popup o algo similar
+                            }
+                        }
+                    }
+                    KeyCode::Char('e') => {
+                        app.input_mode = InputMode::Editing;
+                    }
                     KeyCode::Char('n') => {
                         app.reset();
                     }
@@ -226,7 +317,9 @@ fn ui(f: &mut Frame, app: &App) {
     let instructions = match app.input_mode {
         InputMode::Normal => "Press 'e' to edit Title, 'c' to create PR, 'q' to quit",
         InputMode::Editing => "Editing mode. Press 'Esc' to exit, 'Tab' to move to next field",
-        InputMode::Creating => "PR Created! Press 'n' to create a new PR",
+        InputMode::Creating => {
+            "Press 'n' to create a new PR, 'e' to edit the PR, 'Enter' to submit"
+        }
     };
     let instructions_paragraph =
         Paragraph::new(instructions).style(Style::default().fg(Color::Gray));

@@ -5,4 +5,7 @@ edition = "2021"
 
 [dependencies]
 crossterm = "0.28.1"
+octocrab = "0.39.0"
 ratatui = "0.28.1"
+thiserror = "1.0.64"
+tokio = { version = "1.40.0", features = ["full"] }
