@@ -44,6 +44,8 @@ enum PullRequestError {
 }
 
 struct App {
+    error_message: Option<String>,
+    success_message: Option<String>,
     pull_request: PullRequest,
     input_mode: InputMode,
     current_field: usize,
@@ -62,6 +64,8 @@ impl App {
             input_mode: InputMode::Normal,
             current_field: 0,
             show_popup: false,
+            error_message: None,
+            success_message: None,
         }
     }
 
@@ -117,21 +121,19 @@ impl App {
         let pr_result = octocrab
             .pulls(repo_owner, repo_name)
             .create(
-                &self.pull_request.title,         // Título del PR
-                &self.pull_request.source_branch, // Rama de origen
-                &self.pull_request.target_branch, // Rama de destino
+                &self.pull_request.title,
+                &self.pull_request.source_branch,
+                &self.pull_request.target_branch,
             )
-            .body(&self.pull_request.description) // Descripción del PR
+            .body(&self.pull_request.description)
             .send()
             .await;
 
         match pr_result {
             Ok(pr) => Ok(pr),
             Err(e) => {
-                // Extraer detalles del error
                 if let OctocrabError::GitHub { source, .. } = &e {
                     match source.status_code.as_u16() {
-                        // Detectar si ya existe el PR
                         422 => {
                             return Err(PullRequestError::PullRequestValidationFailed(
                                 e.to_string(),
@@ -144,6 +146,19 @@ impl App {
                 }
             }
         }
+    }
+
+    fn set_error(&mut self, error: String) {
+        self.error_message = Some(error);
+    }
+
+    fn set_success(&mut self, success: String) {
+        self.success_message = Some(success);
+    }
+
+    fn clear_result(&mut self) {
+        self.error_message = None;
+        self.success_message = None;
     }
 }
 
@@ -216,21 +231,24 @@ fn main() -> Result<(), io::Error> {
                                     Some(ref url) => url.to_string(),
                                     None => "No URL available".to_string(),
                                 };
-                                println!("Pull request created successfully! \n Url: {}", url_str);
-                                app.show_popup = false; // Ocultar popup o actualizar estado
-                                app.reset(); // Resetear el formulario después de crear el PR
+                                app.set_success(format!(
+                                    "Pull request created successfully! \n Url: {}",
+                                    url_str
+                                ));
+                                app.reset();
                             }
                             Err(e) => {
-                                println!("Failed to create pull request: {}", e);
-                                // Podrías mostrar un mensaje de error en el popup o algo similar
+                                app.set_error(format!("Failed to create pull request: {}", e));
                             }
                         }
                     }
                     KeyCode::Char('e') => {
                         app.input_mode = InputMode::Editing;
+                        app.show_popup = false;
                     }
                     KeyCode::Char('n') => {
                         app.reset();
+                        app.clear_result();
                     }
                     _ => {}
                 },
@@ -257,7 +275,10 @@ fn ui(f: &mut Frame, app: &App) {
                 Constraint::Length(description_height as u16),
                 Constraint::Length(3),
                 Constraint::Length(3),
-                Constraint::Min(0),
+                Constraint::Length(3),
+                Constraint::Percentage(20),
+                Constraint::Percentage(75),
+                Constraint::Percentage(5),
             ]
             .as_ref(),
         )
@@ -313,7 +334,24 @@ fn ui(f: &mut Frame, app: &App) {
         }
     }
 
-    // Instrucciones
+    if let Some(ref error_message) = app.error_message {
+        let error_paragraph = Paragraph::new(Span::from(Span::styled(
+            error_message,
+            Style::default().fg(Color::Red),
+        )))
+        .block(Block::default().borders(Borders::ALL).title("Error"));
+        f.render_widget(error_paragraph, chunks[5]);
+    }
+
+    if let Some(ref success_message) = app.success_message {
+        let success_paragraph = Paragraph::new(Text::from(Text::styled(
+            success_message,
+            Style::default().fg(Color::Green),
+        )))
+        .block(Block::default().borders(Borders::ALL).title("Success"));
+        f.render_widget(success_paragraph, chunks[5]);
+    }
+    // Instructions
     let instructions = match app.input_mode {
         InputMode::Normal => "Press 'e' to edit Title, 'c' to create PR, 'q' to quit",
         InputMode::Editing => "Editing mode. Press 'Esc' to exit, 'Tab' to move to next field",
@@ -323,7 +361,7 @@ fn ui(f: &mut Frame, app: &App) {
     };
     let instructions_paragraph =
         Paragraph::new(instructions).style(Style::default().fg(Color::Gray));
-    f.render_widget(instructions_paragraph, chunks[4]);
+    f.render_widget(instructions_paragraph, chunks[7]);
 
     if app.show_popup {
         let popup_block = Block::default()
@@ -331,7 +369,7 @@ fn ui(f: &mut Frame, app: &App) {
             .borders(Borders::ALL);
 
         let area = centered_rect(60, 20, f.area());
-        f.render_widget(Clear, area); //this clears out the background
+        f.render_widget(Clear, area);
         f.render_widget(popup_block, area);
 
         let popup_text = vec![
