@@ -12,7 +12,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Clear, Paragraph, Wrap},
+    widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
     Frame, Terminal,
 };
 use std::io;
@@ -209,6 +209,8 @@ fn main() -> Result<(), io::Error> {
                         let current_field = app.get_current_field_mut();
                         if current_field_index == 1 {
                             current_field.push('\n');
+                        } else if current_field_index == 3 {
+                            app.preview_pull_request();
                         } else {
                             app.current_field = (app.current_field + 1) % 4;
                         }
@@ -264,20 +266,14 @@ fn main() -> Result<(), io::Error> {
 }
 
 fn ui(f: &mut Frame, app: &App) {
-    let description_lines = app.pull_request.description.lines().count();
-    let description_height = description_lines.min(30) + 2;
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
         .constraints(
             [
-                Constraint::Length(3),
-                Constraint::Length(description_height as u16),
-                Constraint::Length(3),
-                Constraint::Length(3),
-                Constraint::Length(3),
-                Constraint::Percentage(20),
-                Constraint::Percentage(75),
+                Constraint::Percentage(5),
+                Constraint::Percentage(40),
+                Constraint::Percentage(50),
                 Constraint::Percentage(5),
             ]
             .as_ref(),
@@ -285,10 +281,46 @@ fn ui(f: &mut Frame, app: &App) {
         .split(f.area());
 
     let block = Block::default()
-        .title("Pull Request Creator")
-        .borders(Borders::ALL);
+        .title("PRT: Pull Request TUI")
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded);
     f.render_widget(block, f.area());
 
+    let repo_block = Block::default()
+        .title("Context")
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded);
+
+    let repo_area = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Percentage(100), // Ajusta según el tamaño que prefieras
+            ]
+            .as_ref(),
+        )
+        .split(chunks[0]); // Aquí puedes usar `chunks[0]` para colocar el bloque en el área adecuada.
+
+    f.render_widget(repo_block, repo_area[0]);
+
+    let description_lines = app.pull_request.description.lines().count();
+    let description_height = description_lines.min(15) + 2;
+    let form_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(2)
+        .constraints(
+            [
+                Constraint::Length(1),
+                Constraint::Length(description_height as u16),
+                Constraint::Length(1),
+                Constraint::Length(1),
+                Constraint::Length(3),
+            ]
+            .as_ref(),
+        )
+        .split(chunks[1]);
+    let form_block = Block::default().title("Create").borders(Borders::ALL);
+    f.render_widget(form_block, chunks[1]);
     let fields = vec![
         ("Title", &app.pull_request.title),
         ("Description", &app.pull_request.description),
@@ -299,11 +331,7 @@ fn ui(f: &mut Frame, app: &App) {
     for (i, (name, value)) in fields.iter().enumerate() {
         let (text, style) = match app.input_mode {
             InputMode::Normal => (
-                format!(
-                    "{}: {}",
-                    name,
-                    if value.is_empty() { "<empty>" } else { value }
-                ),
+                format!("{}: {}", name, if value.is_empty() { "" } else { value }),
                 Style::default().fg(if i == app.current_field {
                     Color::Yellow
                 } else {
@@ -323,14 +351,15 @@ fn ui(f: &mut Frame, app: &App) {
                 Style::default().fg(Color::White),
             ),
         };
+
         if i == 1 {
             let paragraph = Paragraph::new(Text::from(text).style(style))
                 .block(Block::default())
                 .wrap(Wrap { trim: true });
-            f.render_widget(paragraph, chunks[i]);
+            f.render_widget(paragraph, form_layout[i]);
         } else {
             let paragraph = Paragraph::new(Span::styled(text, style));
-            f.render_widget(paragraph, chunks[i]);
+            f.render_widget(paragraph, form_layout[i]);
         }
     }
 
@@ -340,7 +369,7 @@ fn ui(f: &mut Frame, app: &App) {
             Style::default().fg(Color::Red),
         )))
         .block(Block::default().borders(Borders::ALL).title("Error"));
-        f.render_widget(error_paragraph, chunks[5]);
+        f.render_widget(error_paragraph, chunks[2]);
     }
 
     if let Some(ref success_message) = app.success_message {
@@ -349,7 +378,7 @@ fn ui(f: &mut Frame, app: &App) {
             Style::default().fg(Color::Green),
         )))
         .block(Block::default().borders(Borders::ALL).title("Success"));
-        f.render_widget(success_paragraph, chunks[5]);
+        f.render_widget(success_paragraph, chunks[2]);
     }
     // Instructions
     let instructions = match app.input_mode {
@@ -361,7 +390,7 @@ fn ui(f: &mut Frame, app: &App) {
     };
     let instructions_paragraph =
         Paragraph::new(instructions).style(Style::default().fg(Color::Gray));
-    f.render_widget(instructions_paragraph, chunks[7]);
+    f.render_widget(instructions_paragraph, chunks[3]);
 
     if app.show_popup {
         let popup_block = Block::default()
