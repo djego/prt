@@ -105,7 +105,7 @@ impl App {
         let github_token = std::env::var("GITHUB_TOKEN").expect("GitHub token not set");
         let octocrab = Octocrab::builder().personal_token(github_token).build()?;
         let repo_owner = "djego";
-        let repo_name = "exchange-rate-next";
+        let repo_name = "prt";
 
         if self.pull_request.source_branch.is_empty() {
             return Err(PullRequestError::InvalidInput(
