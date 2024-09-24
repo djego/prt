@@ -232,7 +232,6 @@ fn main() -> Result<(), io::Error> {
                                     "Pull request created successfully! \n Url: {}",
                                     url_str
                                 ));
-                                app.reset();
                             }
                             Err(e) => {
                                 app.set_error(format!("Failed to create pull request: {}", e));
