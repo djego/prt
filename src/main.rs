@@ -9,6 +9,7 @@ use octocrab::Error as OctocrabError;
 use octocrab::Octocrab;
 
 use crate::ui::layout::ui;
+use dotenv::dotenv;
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
 use thiserror::Error;
@@ -45,6 +46,9 @@ struct App {
     input_mode: InputMode,
     current_field: usize,
     show_popup: bool,
+    repo_owner: String,
+    repo_name: String,
+    default_branch: String,
 }
 
 impl App {
@@ -54,13 +58,18 @@ impl App {
                 title: String::new(),
                 description: String::new(),
                 source_branch: String::new(),
-                target_branch: String::new(),
+                target_branch: std::env::var("GITHUB_DEFAULT_BRANCH")
+                    .unwrap_or_else(|_| "main".to_string()),
             },
             input_mode: InputMode::Normal,
             current_field: 0,
             show_popup: false,
             error_message: None,
             success_message: None,
+            repo_owner: std::env::var("GITHUB_OWNER").expect("GitHub repo owner not set"),
+            repo_name: std::env::var("GITHUB_REPO_NAME").expect("GitHub repo name not set"),
+            default_branch: std::env::var("GITHUB_DEFAULT_BRANCH")
+                .unwrap_or_else(|_| "main".to_string()),
         }
     }
 
@@ -89,20 +98,17 @@ impl App {
             title: String::new(),
             description: String::new(),
             source_branch: String::new(),
-            target_branch: String::new(),
+            target_branch: self.default_branch.clone(),
         };
         self.input_mode = InputMode::Normal;
         self.current_field = 0;
         self.show_popup = false;
         self.error_message = None;
-        self.success_message = None;
     }
 
     async fn create_github_pull_request(&self) -> Result<OctocrabPullRequest, PullRequestError> {
         let github_token = std::env::var("GITHUB_TOKEN").expect("GitHub token not set");
         let octocrab = Octocrab::builder().personal_token(github_token).build()?;
-        let repo_owner = "djego";
-        let repo_name = "prt";
 
         if self.pull_request.source_branch.is_empty() {
             return Err(PullRequestError::InvalidInput(
@@ -116,7 +122,7 @@ impl App {
         }
 
         let pr_result = octocrab
-            .pulls(repo_owner, repo_name)
+            .pulls(&self.repo_owner, &self.repo_name)
             .create(
                 &self.pull_request.title,
                 &self.pull_request.source_branch,
@@ -152,9 +158,15 @@ impl App {
     fn set_success(&mut self, success: String) {
         self.success_message = Some(success);
     }
+
+    fn clear_success(&mut self) {
+        self.success_message = None;
+    }
 }
 
 fn main() -> Result<(), io::Error> {
+    dotenv().ok();
+
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen)?;
@@ -175,6 +187,7 @@ fn main() -> Result<(), io::Error> {
                     }
                     KeyCode::Char('n') => {
                         app.reset();
+                        app.clear_success();
                         app.enter_edit_mode(0);
                     }
                     KeyCode::Down => {
@@ -232,6 +245,7 @@ fn main() -> Result<(), io::Error> {
                                     "Pull request created successfully! \n Url: {}",
                                     url_str
                                 ));
+                                app.reset();
                             }
                             Err(e) => {
                                 app.set_error(format!("Failed to create pull request: {}", e));

@@ -2,6 +2,7 @@ use crate::ui::util::{centered_rect, inner_area}; // Importa las funciones utili
 use crate::App; // Importa la estructura App
 use crate::InputMode;
 use ratatui::layout::{Constraint, Direction, Layout};
+use ratatui::style::Modifier;
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
 use ratatui::{
@@ -31,16 +32,24 @@ pub fn ui(f: &mut Frame, app: &App) {
     f.render_widget(block, f.area());
 
     let repository_block = Block::default()
-        .title("Current repository")
+        .title("Context")
         .borders(Borders::ALL)
         .border_type(ratatui::widgets::BorderType::Rounded);
+    let text = vec![
+        Line::from(Span::raw(format!("Owner: {}", app.repo_owner))),
+        Line::from(Span::raw(format!("Repo: {}", app.repo_name))),
+        Line::from(Span::raw(format!("Default Branch: {}", app.default_branch))),
+    ];
+    let paragraph = Paragraph::new(text)
+        .block(repository_block)
+        .style(Style::default().add_modifier(Modifier::BOLD));
 
     let repo_area = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(100)].as_ref())
         .split(chunks[0]);
 
-    f.render_widget(repository_block, repo_area[0]);
+    f.render_widget(paragraph, repo_area[0]);
 
     let description_lines = app.pull_request.description.lines().count();
     let description_height = description_lines.min(20) + 2;
@@ -69,7 +78,19 @@ pub fn ui(f: &mut Frame, app: &App) {
     for (i, (name, value)) in fields.iter().enumerate() {
         let (text, style) = match app.input_mode {
             InputMode::Normal => (
-                format!("{}: {}", name, if value.is_empty() { "" } else { value }),
+                format!(
+                    "{}: {}",
+                    name,
+                    if value.is_empty() {
+                        if i == 3 {
+                            "[default]"
+                        } else {
+                            ""
+                        }
+                    } else {
+                        value
+                    }
+                ),
                 Style::default().fg(if i == app.current_field {
                     Color::Yellow
                 } else {

@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 crossterm = "0.28.1"
+dotenv = "0.15.0"
 octocrab = "0.39.0"
 ratatui = "0.28.1"
 thiserror = "1.0.64"
