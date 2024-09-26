@@ -26,4 +26,7 @@ cargo updatae
 cargo run
 ````
 
+## Demo 
+[![asciicast](https://asciinema.org/a/677701.svg)](https://asciinema.org/a/677701)
+
 Happy coding!
