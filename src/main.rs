@@ -21,9 +21,8 @@ fn main() -> Result<(), io::Error> {
     execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-
     let mut app = App::new();
-
+    let runtime = tokio::runtime::Runtime::new().unwrap();
     loop {
         terminal.draw(|f| ui(f, &app))?;
 
@@ -80,10 +79,7 @@ fn main() -> Result<(), io::Error> {
                     KeyCode::Enter => {
                         app.input_mode = InputMode::Normal;
                         app.show_popup = false;
-                        let result = tokio::runtime::Runtime::new()
-                            .unwrap()
-                            .block_on(app.create_github_pull_request());
-
+                        let result = runtime.block_on(app.create_github_pull_request());
                         match result {
                             Ok(pr) => {
                                 let url_str = match pr.html_url {
