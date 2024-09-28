@@ -157,24 +157,20 @@ pub fn ui(f: &mut Frame, app: &App) {
     if app.show_popup {
         let popup_block = Block::default()
             .title("Pull Request Confirmation")
-            .borders(Borders::ALL);
+            .borders(Borders::ALL)
+            .style(Style::default().bg(Color::Blue));
 
-        let area = centered_rect(90, 15, f.area());
+        let area = centered_rect(30, 12, f.area());
         f.render_widget(Clear, area);
         f.render_widget(popup_block, area);
 
         let popup_text = vec![
-            Line::from(Span::styled(
-                "Please confirm the creation of the following pull request:",
-                Style::default().fg(Color::Green),
-            )),
-            Line::from(""),
-            Line::from(format!("Title: {}", app.pull_request.title)),
             Line::from(format!(
-                "Branches: {} -> {}",
+                "Please confirm PR creation from {} to {} ",
                 app.pull_request.source_branch, app.pull_request.target_branch
             )),
             Line::from(""),
+            Line::from("Press [y] to confirm or [n] to cancel"),
         ];
 
         let popup_paragraph = Paragraph::new(popup_text)

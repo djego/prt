@@ -76,7 +76,7 @@ fn main() -> Result<(), io::Error> {
                     _ => {}
                 },
                 InputMode::Creating => match key.code {
-                    KeyCode::Enter => {
+                    KeyCode::Enter | KeyCode::Char('y') => {
                         app.input_mode = InputMode::Normal;
                         app.show_popup = false;
                         let result = runtime.block_on(app.create_github_pull_request());
@@ -101,7 +101,7 @@ fn main() -> Result<(), io::Error> {
                         app.input_mode = InputMode::Editing;
                         app.show_popup = false;
                     }
-                    KeyCode::Char('q') => {
+                    KeyCode::Char('q') | KeyCode::Char('n') => {
                         app.input_mode = InputMode::Normal;
                         app.show_popup = false;
                     }
