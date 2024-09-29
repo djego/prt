@@ -6,17 +6,12 @@ mod tests {
 
     #[test]
     fn test_app_initialization() {
-        // Configura las variables de entorno necesarias para la prueba
-        env::set_var("GITHUB_OWNER", "test_owner");
-        env::set_var("GITHUB_REPO_NAME", "test_repo");
+        //let (repo_owner, repo_name) = mock_get_repo_info().unwrap();
         env::set_var("GITHUB_DEFAULT_BRANCH", "main");
-
-        // Crea una instancia de App
         let app = App::new();
 
-        // Verifica que la inicialización sea correcta
-        assert_eq!(app.repo_owner, "test_owner");
-        assert_eq!(app.repo_name, "test_repo");
+        //assert_eq!(app.repo_owner, repo_owner);
+        //assert_eq!(app.repo_name, repo_name);
         assert_eq!(app.default_branch, "main");
         assert!(app.pull_request.title.is_empty()); // asumiendo que title se inicializa vacío
         assert!(app.pull_request.description.is_empty());

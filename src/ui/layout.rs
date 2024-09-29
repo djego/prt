@@ -1,5 +1,5 @@
-use crate::ui::util::{centered_rect, inner_area}; // Importa las funciones utilitarias
-use crate::App; // Importa la estructura App
+use crate::ui::util::{centered_rect, inner_area};
+use crate::App;
 use crate::InputMode;
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::Modifier;
