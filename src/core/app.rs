@@ -14,7 +14,7 @@ pub struct App {
     pub show_popup: bool,
     pub repo_owner: String,
     pub repo_name: String,
-    pub default_branch: String,
+    pub default_target_branch: String,
 }
 
 impl App {
@@ -33,7 +33,7 @@ impl App {
             success_message: None,
             repo_owner,
             repo_name,
-            default_branch: std::env::var("GITHUB_DEFAULT_TARGET_BRANCH")
+            default_target_branch: std::env::var("GITHUB_DEFAULT_TARGET_BRANCH")
                 .unwrap_or_else(|_| "main".to_string()),
         }
     }
@@ -51,7 +51,7 @@ impl App {
                 "Source branch is empty".to_string(),
             ));
         }
-        if self.pull_request.target_branch.is_empty() {
+        if self.default_target_branch.is_empty() {
             return Err(PullRequestError::InvalidInput(
                 "Target branch is empty".to_string(),
             ));
@@ -62,7 +62,7 @@ impl App {
             .create(
                 &self.pull_request.title,
                 &self.pull_request.source_branch,
-                &self.pull_request.target_branch,
+                &self.default_target_branch,
             )
             .body(&self.pull_request.description)
             .send()
@@ -92,7 +92,6 @@ impl App {
             0 => &mut self.pull_request.title,
             1 => &mut self.pull_request.description,
             2 => &mut self.pull_request.source_branch,
-            3 => &mut self.pull_request.target_branch,
             _ => unreachable!(),
         }
     }
