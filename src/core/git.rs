@@ -30,3 +30,19 @@ fn parse_git_url(url: &str) -> Option<(&str, &str)> {
     }
     None
 }
+
+pub fn get_current_branch() -> Option<String> {
+    let output = Command::new("git")
+        .arg("rev-parse")
+        .arg("--abbrev-ref")
+        .arg("HEAD")
+        .output()
+        .expect("Failed to execute git command");
+
+    if output.status.success() {
+        let branch = str::from_utf8(&output.stdout).unwrap().trim();
+        return Some(branch.to_string());
+    }
+
+    None
+}

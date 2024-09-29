@@ -16,7 +16,7 @@ cd prt
 Then, create a `.env` file with the following content:
 ````bash
 GITHUB_TOKEN=your_github_token
-GITHUB_DEFAULT_BRANCH=your_github_default_branch # if not set, it will be 'main'
+GITHUB_DEFAULT_TARGET_BRANCH=your_github_default_target_branch # if not set, it will be 'main'
 ````
 Finally, use the following commands:
 ````rust

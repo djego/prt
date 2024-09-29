@@ -160,7 +160,7 @@ pub fn ui(f: &mut Frame, app: &App) {
             .borders(Borders::ALL)
             .style(Style::default().bg(Color::Blue));
 
-        let area = centered_rect(30, 12, f.area());
+        let area = centered_rect(35, 12, f.area());
         f.render_widget(Clear, area);
         f.render_widget(popup_block, area);
 

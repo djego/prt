@@ -97,11 +97,11 @@ fn main() -> Result<(), io::Error> {
                             }
                         }
                     }
-                    KeyCode::Char('e') => {
+                    KeyCode::Char('e') | KeyCode::Char('n') => {
                         app.input_mode = InputMode::Editing;
                         app.show_popup = false;
                     }
-                    KeyCode::Char('q') | KeyCode::Char('n') => {
+                    KeyCode::Char('q') => {
                         app.input_mode = InputMode::Normal;
                         app.show_popup = false;
                     }

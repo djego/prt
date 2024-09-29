@@ -7,7 +7,7 @@ mod tests {
     #[test]
     fn test_app_initialization() {
         //let (repo_owner, repo_name) = mock_get_repo_info().unwrap();
-        env::set_var("GITHUB_DEFAULT_BRANCH", "main");
+        env::set_var("GITHUB_DEFAULT_TARGET_BRANCH", "main");
         let app = App::new();
 
         //assert_eq!(app.repo_owner, repo_owner);
