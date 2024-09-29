@@ -1,5 +1,5 @@
 use crate::core::errors::PullRequestError;
-use crate::core::git::get_repo_info;
+use crate::core::git::{get_current_branch, get_repo_info};
 use crate::core::input_mode::InputMode;
 use crate::core::pull_request::PullRequest;
 use octocrab::models::pulls::PullRequest as OctocrabPullRequest;
@@ -23,8 +23,9 @@ impl App {
             Some((owner, repo)) => (owner, repo),
             None => ("-".to_string(), "-".to_string()),
         };
+        let current_branch = get_current_branch().unwrap_or_else(|| "-".to_string());
         App {
-            pull_request: PullRequest::new(),
+            pull_request: PullRequest::new(current_branch.clone()),
             input_mode: InputMode::Normal,
             current_field: 0,
             show_popup: false,
@@ -32,7 +33,7 @@ impl App {
             success_message: None,
             repo_owner,
             repo_name,
-            default_branch: std::env::var("GITHUB_DEFAULT_BRANCH")
+            default_branch: std::env::var("GITHUB_DEFAULT_TARGET_BRANCH")
                 .unwrap_or_else(|_| "main".to_string()),
         }
     }
@@ -107,7 +108,7 @@ impl App {
     }
 
     pub fn reset(&mut self) {
-        self.pull_request = PullRequest::new();
+        self.pull_request = PullRequest::new(self.pull_request.source_branch.clone());
         self.input_mode = InputMode::Normal;
         self.current_field = 0;
         self.show_popup = false;

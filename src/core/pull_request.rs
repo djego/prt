@@ -6,12 +6,12 @@ pub struct PullRequest {
 }
 
 impl PullRequest {
-    pub fn new() -> PullRequest {
+    pub fn new(current_branch: String) -> PullRequest {
         PullRequest {
             title: String::new(),
             description: String::new(),
-            source_branch: String::new(),
-            target_branch: std::env::var("GITHUB_DEFAULT_BRANCH")
+            source_branch: current_branch,
+            target_branch: std::env::var("GITHUB_DEFAULT_TARGET_BRANCH")
                 .unwrap_or_else(|_| "main".to_string()),
         }
     }
