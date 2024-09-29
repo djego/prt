@@ -12,7 +12,7 @@ mod tests {
 
         //assert_eq!(app.repo_owner, repo_owner);
         //assert_eq!(app.repo_name, repo_name);
-        assert_eq!(app.default_branch, "main");
+        assert_eq!(app.default_target_branch, "main");
         assert!(app.pull_request.title.is_empty()); // asumiendo que title se inicializa vacío
         assert!(app.pull_request.description.is_empty());
     }

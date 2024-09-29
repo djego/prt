@@ -38,7 +38,10 @@ pub fn ui(f: &mut Frame, app: &App) {
     let text = vec![
         Line::from(Span::raw(format!("Owner: {}", app.repo_owner))),
         Line::from(Span::raw(format!("Repo: {}", app.repo_name))),
-        Line::from(Span::raw(format!("Default Branch: {}", app.default_branch))),
+        Line::from(Span::raw(format!(
+            "Target Branch: {}",
+            app.default_target_branch
+        ))),
     ];
     let paragraph = Paragraph::new(text)
         .block(repository_block)
@@ -61,7 +64,6 @@ pub fn ui(f: &mut Frame, app: &App) {
                 Constraint::Length(1),
                 Constraint::Length(description_height as u16),
                 Constraint::Length(1),
-                Constraint::Length(1),
             ]
             .as_ref(),
         )
@@ -72,7 +74,6 @@ pub fn ui(f: &mut Frame, app: &App) {
         ("Title", &app.pull_request.title),
         ("Description", &app.pull_request.description),
         ("Source Branch", &app.pull_request.source_branch),
-        ("Target Branch", &app.pull_request.target_branch),
     ];
 
     for (i, (name, value)) in fields.iter().enumerate() {
@@ -91,24 +92,21 @@ pub fn ui(f: &mut Frame, app: &App) {
                         value
                     }
                 ),
-                Style::default().fg(if i == app.current_field {
-                    Color::Yellow
+                if i == app.current_field {
+                    Style::default().fg(Color::Yellow)
                 } else {
-                    Color::White
-                }),
+                    Style::default()
+                },
             ),
             InputMode::Editing => (
                 format!("{}: {}", name, value),
                 if i == app.current_field {
                     Style::default().fg(Color::Green)
                 } else {
-                    Style::default().fg(Color::White)
+                    Style::default()
                 },
             ),
-            InputMode::Creating => (
-                format!("{}: {}", name, value),
-                Style::default().fg(Color::White),
-            ),
+            InputMode::Creating => (format!("{}: {}", name, value), Style::default()),
         };
 
         if i == 1 {
@@ -150,15 +148,14 @@ pub fn ui(f: &mut Frame, app: &App) {
             "[Creating mode] \n Press [Enter] to confirm, Press [e] to continue editing, Press [q] to quit"
         }
     };
-    let instructions_paragraph =
-        Paragraph::new(instructions).style(Style::default().fg(Color::Gray));
+    let instructions_paragraph = Paragraph::new(instructions).style(Style::default());
     f.render_widget(instructions_paragraph, chunks[3]);
 
     if app.show_popup {
         let popup_block = Block::default()
             .title("Pull Request Confirmation")
             .borders(Borders::ALL)
-            .style(Style::default().bg(Color::Blue));
+            .style(Style::default());
 
         let area = centered_rect(35, 12, f.area());
         f.render_widget(Clear, area);
@@ -167,7 +164,7 @@ pub fn ui(f: &mut Frame, app: &App) {
         let popup_text = vec![
             Line::from(format!(
                 "Please confirm PR creation from {} to {} ",
-                app.pull_request.source_branch, app.pull_request.target_branch
+                app.pull_request.source_branch, app.default_target_branch
             )),
             Line::from(""),
             Line::from("Press [y] to confirm or [n] to cancel"),

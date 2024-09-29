@@ -25,7 +25,6 @@ fn main() -> Result<(), io::Error> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     loop {
         terminal.draw(|f| ui(f, &app))?;
-
         if let Event::Key(key) = event::read()? {
             match app.input_mode {
                 InputMode::Normal => match key.code {
@@ -39,10 +38,10 @@ fn main() -> Result<(), io::Error> {
                         app.enter_edit_mode(0);
                     }
                     KeyCode::Down => {
-                        app.current_field = (app.current_field + 1) % 4;
+                        app.current_field = (app.current_field + 1) % 3;
                     }
                     KeyCode::Up => {
-                        app.current_field = (app.current_field + 3) % 4;
+                        app.current_field = (app.current_field + 2) % 3;
                     }
                     _ => {}
                 },
@@ -68,10 +67,10 @@ fn main() -> Result<(), io::Error> {
                         }
                     }
                     KeyCode::Tab => {
-                        app.current_field = (app.current_field + 1) % 4;
+                        app.current_field = (app.current_field + 1) % 3;
                     }
                     KeyCode::BackTab => {
-                        app.current_field = (app.current_field + 3) % 4;
+                        app.current_field = (app.current_field + 2) % 3;
                     }
                     _ => {}
                 },
