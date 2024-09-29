@@ -1,9 +1,9 @@
 mod core;
 mod ui;
 
-use crate::core::app::App;
 use crate::core::input_mode::InputMode;
 use crate::ui::layout::ui;
+use core::app::App;
 use crossterm::{
     event::{self, Event, KeyCode},
     execute,
@@ -15,12 +15,12 @@ use std::io;
 
 fn main() -> Result<(), io::Error> {
     dotenv().ok();
-
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
+
     let mut app = App::new();
     let runtime = tokio::runtime::Runtime::new().unwrap();
     loop {
@@ -64,7 +64,7 @@ fn main() -> Result<(), io::Error> {
                         if current_field_index == 1 {
                             current_field.push('\n');
                         } else {
-                            app.preview_pull_request();
+                            app.confirm_pull_request();
                         }
                     }
                     KeyCode::Tab => {

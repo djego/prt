@@ -1,4 +1,5 @@
 use crate::core::errors::PullRequestError;
+use crate::core::git::get_repo_info;
 use crate::core::input_mode::InputMode;
 use crate::core::pull_request::PullRequest;
 use octocrab::models::pulls::PullRequest as OctocrabPullRequest;
@@ -18,6 +19,10 @@ pub struct App {
 
 impl App {
     pub fn new() -> App {
+        let (repo_owner, repo_name) = match get_repo_info() {
+            Some((owner, repo)) => (owner, repo),
+            None => ("-".to_string(), "-".to_string()),
+        };
         App {
             pull_request: PullRequest::new(),
             input_mode: InputMode::Normal,
@@ -25,8 +30,8 @@ impl App {
             show_popup: false,
             error_message: None,
             success_message: None,
-            repo_owner: std::env::var("GITHUB_OWNER").unwrap_or_else(|_| "owner".to_string()),
-            repo_name: std::env::var("GITHUB_REPO_NAME").unwrap_or_else(|_| "repo".to_string()),
+            repo_owner,
+            repo_name,
             default_branch: std::env::var("GITHUB_DEFAULT_BRANCH")
                 .unwrap_or_else(|_| "main".to_string()),
         }
@@ -96,7 +101,7 @@ impl App {
         self.current_field = index;
     }
 
-    pub fn preview_pull_request(&mut self) {
+    pub fn confirm_pull_request(&mut self) {
         self.input_mode = InputMode::Creating;
         self.show_popup = true;
     }
