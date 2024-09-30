@@ -1,6 +1,6 @@
 mod core;
 mod ui;
-
+use crate::core::config::{load_config, save_config};
 use crate::core::input_mode::InputMode;
 use crate::ui::layout::ui;
 use core::app::App;
@@ -21,11 +21,40 @@ fn main() -> Result<(), io::Error> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
+    let config = load_config();
+
     let mut app = App::new();
     let runtime = tokio::runtime::Runtime::new().unwrap();
+
+    if config.is_none() {
+        app.show_pat_popup = true;
+    }
+
     loop {
         terminal.draw(|f| ui(f, &app))?;
         if let Event::Key(key) = event::read()? {
+            if app.show_pat_popup {
+                match key.code {
+                    KeyCode::Char(c) => {
+                        app.config_pat.push(c);
+                    }
+                    KeyCode::Backspace => {
+                        app.config_pat.pop();
+                    }
+                    KeyCode::Enter => {
+                        if !app.config_pat.is_empty() {
+                            save_config(&app.config_pat).expect("Failed to save the configuration");
+                            app.show_pat_popup = false;
+                        } else {
+                            app.set_error("PAT cannot be empty!".to_string());
+                        }
+                    }
+                    KeyCode::Esc => break,
+                    _ => {}
+                }
+                continue;
+            }
+
             match app.input_mode {
                 InputMode::Normal => match key.code {
                     KeyCode::Char('q') => break,
@@ -77,8 +106,9 @@ fn main() -> Result<(), io::Error> {
                 InputMode::Creating => match key.code {
                     KeyCode::Enter | KeyCode::Char('y') => {
                         app.input_mode = InputMode::Normal;
-                        app.show_popup = false;
-                        let result = runtime.block_on(app.create_github_pull_request());
+                        app.show_confirm_popup = false;
+                        let result = runtime
+                            .block_on(app.create_github_pull_request(app.config_pat.clone()));
                         match result {
                             Ok(pr) => {
                                 let url_str = match pr.html_url {
@@ -98,11 +128,11 @@ fn main() -> Result<(), io::Error> {
                     }
                     KeyCode::Char('e') | KeyCode::Char('n') => {
                         app.input_mode = InputMode::Editing;
-                        app.show_popup = false;
+                        app.show_confirm_popup = false;
                     }
                     KeyCode::Char('q') => {
                         app.input_mode = InputMode::Normal;
-                        app.show_popup = false;
+                        app.show_confirm_popup = false;
                     }
                     _ => {}
                 },

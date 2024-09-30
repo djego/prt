@@ -2,9 +2,8 @@ use crate::ui::util::{centered_rect, inner_area};
 use crate::App;
 use crate::InputMode;
 use ratatui::layout::{Constraint, Direction, Layout};
-use ratatui::style::Modifier;
 use ratatui::text::{Line, Span, Text};
-use ratatui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
+use ratatui::widgets::{Block, Borders, Clear, Padding, Paragraph, Wrap};
 use ratatui::{
     style::{Color, Style},
     Frame,
@@ -13,12 +12,12 @@ use ratatui::{
 pub fn ui(f: &mut Frame, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .margin(1)
+        .margin(2)
         .constraints(
             [
                 Constraint::Percentage(15),
-                Constraint::Percentage(60),
-                Constraint::Percentage(20),
+                Constraint::Percentage(50),
+                Constraint::Percentage(30),
                 Constraint::Percentage(5),
             ]
             .as_ref(),
@@ -33,6 +32,7 @@ pub fn ui(f: &mut Frame, app: &App) {
 
     let repository_block = Block::default()
         .title("Context")
+        .padding(Padding::new(1, 0, 1, 0))
         .borders(Borders::ALL)
         .border_type(ratatui::widgets::BorderType::Rounded);
     let text = vec![
@@ -45,7 +45,7 @@ pub fn ui(f: &mut Frame, app: &App) {
     ];
     let paragraph = Paragraph::new(text)
         .block(repository_block)
-        .style(Style::default().add_modifier(Modifier::BOLD));
+        .style(Style::default());
 
     let repo_area = Layout::default()
         .direction(Direction::Vertical)
@@ -58,7 +58,9 @@ pub fn ui(f: &mut Frame, app: &App) {
     let description_height = description_lines.min(20) + 2;
     let form_layout = Layout::default()
         .direction(Direction::Vertical)
-        .margin(2)
+        .margin(1)
+        .vertical_margin(2)
+        .horizontal_margin(2)
         .constraints(
             [
                 Constraint::Length(1),
@@ -68,7 +70,10 @@ pub fn ui(f: &mut Frame, app: &App) {
             .as_ref(),
         )
         .split(chunks[1]);
-    let form_block = Block::default().title("Create").borders(Borders::ALL);
+    let form_block = Block::default()
+        .title("Create")
+        .padding(Padding::proportional(1))
+        .borders(Borders::ALL);
     f.render_widget(form_block, chunks[1]);
     let fields = vec![
         ("Title", &app.pull_request.title),
@@ -79,19 +84,7 @@ pub fn ui(f: &mut Frame, app: &App) {
     for (i, (name, value)) in fields.iter().enumerate() {
         let (text, style) = match app.input_mode {
             InputMode::Normal => (
-                format!(
-                    "{}: {}",
-                    name,
-                    if value.is_empty() {
-                        if i == 3 {
-                            "[default]"
-                        } else {
-                            ""
-                        }
-                    } else {
-                        value
-                    }
-                ),
+                format!("{}: {}", name, if value.is_empty() { "" } else { value }),
                 if i == app.current_field {
                     Style::default().fg(Color::Yellow)
                 } else {
@@ -151,7 +144,7 @@ pub fn ui(f: &mut Frame, app: &App) {
     let instructions_paragraph = Paragraph::new(instructions).style(Style::default());
     f.render_widget(instructions_paragraph, chunks[3]);
 
-    if app.show_popup {
+    if app.show_confirm_popup {
         let popup_block = Block::default()
             .title("Pull Request Confirmation")
             .borders(Borders::ALL)
@@ -175,5 +168,28 @@ pub fn ui(f: &mut Frame, app: &App) {
             .alignment(ratatui::layout::Alignment::Left);
 
         f.render_widget(popup_paragraph, inner_area(area));
+    }
+
+    if app.show_pat_popup {
+        let area = centered_rect(50, 15, f.area());
+        f.render_widget(Clear, area);
+
+        let popup_text = vec![
+            Line::from(app.config_pat.as_str())
+                .style(Style::default().bg(Color::Black).fg(Color::White)),
+            Line::from(""),
+            Line::from("Press [enter] to confirm or [esc] to cancel"),
+        ];
+
+        let pat_input = Paragraph::new(popup_text)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Enter you Github PAT:"),
+            )
+            .style(Style::default().bg(Color::White).fg(Color::Black));
+
+        // Centrar el modal en la pantalla
+        f.render_widget(pat_input, inner_area(area));
     }
 }

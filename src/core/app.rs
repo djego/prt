@@ -11,10 +11,12 @@ pub struct App {
     pub pull_request: PullRequest,
     pub input_mode: InputMode,
     pub current_field: usize,
-    pub show_popup: bool,
+    pub show_confirm_popup: bool,
+    pub show_pat_popup: bool,
     pub repo_owner: String,
     pub repo_name: String,
     pub default_target_branch: String,
+    pub config_pat: String,
 }
 
 impl App {
@@ -28,9 +30,11 @@ impl App {
             pull_request: PullRequest::new(current_branch.clone()),
             input_mode: InputMode::Normal,
             current_field: 0,
-            show_popup: false,
+            show_confirm_popup: false,
+            show_pat_popup: false,
             error_message: None,
             success_message: None,
+            config_pat: String::new(),
             repo_owner,
             repo_name,
             default_target_branch: std::env::var("GITHUB_DEFAULT_TARGET_BRANCH")
@@ -40,12 +44,9 @@ impl App {
 
     pub async fn create_github_pull_request(
         &self,
+        pat: String,
     ) -> Result<OctocrabPullRequest, PullRequestError> {
-        let github_token = std::env::var("GITHUB_TOKEN")
-            .map_err(|_| PullRequestError::PATNotSet("Github PAT not set".to_string()))?;
-
-        let octocrab = Octocrab::builder().personal_token(github_token).build()?;
-
+        let octocrab = Octocrab::builder().personal_token(pat).build()?;
         if self.pull_request.source_branch.is_empty() {
             return Err(PullRequestError::InvalidInput(
                 "Source branch is empty".to_string(),
@@ -103,14 +104,14 @@ impl App {
 
     pub fn confirm_pull_request(&mut self) {
         self.input_mode = InputMode::Creating;
-        self.show_popup = true;
+        self.show_confirm_popup = true;
     }
 
     pub fn reset(&mut self) {
         self.pull_request = PullRequest::new(self.pull_request.source_branch.clone());
         self.input_mode = InputMode::Normal;
         self.current_field = 0;
-        self.show_popup = false;
+        self.show_confirm_popup = false;
         self.error_message = None;
     }
 
