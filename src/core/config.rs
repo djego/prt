@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
+use std::env;
 use std::fs::{self, File};
 use std::io::{self, Write};
+use std::path::PathBuf;
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
@@ -28,8 +30,17 @@ pub fn save_config(pat: &str) -> Result<(), io::Error> {
             pat: pat.to_string(),
         },
     };
+
     let toml_str = toml::to_string(&config).expect("Failed to serialize configuration");
-    let mut file = File::create("config.toml")?;
+    let home_dir = env::var("HOME").expect("No se pudo obtener el directorio home");
+
+    let mut config_path = PathBuf::from(home_dir);
+    config_path.push(".prt");
+    fs::create_dir_all(&config_path)?;
+    config_path.push("config.toml");
+
+    let mut file = File::create(config_path)?;
     file.write_all(toml_str.as_bytes())?;
+
     Ok(())
 }
