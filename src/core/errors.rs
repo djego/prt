@@ -10,7 +10,4 @@ pub enum PullRequestError {
 
     #[error("Invalid input: {0}")]
     InvalidInput(String),
-
-    #[error("{0}")]
-    PATNotSet(String),
 }

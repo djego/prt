@@ -38,7 +38,7 @@ mod tests {
         assert!(app.error_message.is_none());
         assert_eq!(app.input_mode, InputMode::Normal);
         assert_eq!(app.current_field, 0);
-        assert!(!app.show_popup);
+        assert!(!app.show_confirm_popup);
     }
 
     #[test]
