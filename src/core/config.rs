@@ -15,12 +15,17 @@ pub struct GitHubConfig {
 }
 
 pub fn load_config() -> Option<Config> {
-    if let Ok(config_content) = fs::read_to_string("config.toml") {
+    let home_dir = env::var("HOME").expect("No se pudo obtener el directorio home");
+    let mut config_path = PathBuf::from(home_dir);
+    config_path.push(".prt");
+    config_path.push("config.toml");
+
+    if let Ok(config_content) = fs::read_to_string(config_path) {
         let config: Config =
             toml::from_str(&config_content).expect("Failed to parse configuration file");
         Some(config)
     } else {
-        None // No existe el archivo
+        None
     }
 }
 
@@ -33,7 +38,6 @@ pub fn save_config(pat: &str) -> Result<(), io::Error> {
 
     let toml_str = toml::to_string(&config).expect("Failed to serialize configuration");
     let home_dir = env::var("HOME").expect("No se pudo obtener el directorio home");
-
     let mut config_path = PathBuf::from(home_dir);
     config_path.push(".prt");
     fs::create_dir_all(&config_path)?;
