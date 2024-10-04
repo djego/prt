@@ -101,6 +101,7 @@ pub fn ui(f: &mut Frame, app: &App) {
                 },
             ),
             InputMode::Creating => (format!("{}: {}", name, value), Style::default()),
+            InputMode::Config => (format!("{}: {}", name, value), Style::default()),
         };
 
         if i == 1 {
@@ -135,11 +136,14 @@ pub fn ui(f: &mut Frame, app: &App) {
     // Instructions
     let instructions = match app.input_mode {
         InputMode::Normal => {
-            "Press [n] to create PR, [e] to edit PR, [c] to modify context or [q] to quit"
+            "Press [n] to create PR, [e] to edit PR, [c] to config or [q] to quit"
         }
         InputMode::Editing => "[Editing mode] \n Press [Esc] to exit, [Tab]/[BackTab] to move to next or previous field, [Enter] to send",
         InputMode::Creating => {
             "[Creating mode] \n Press [Enter] to confirm, Press [e] to continue editing, Press [q] to quit"
+        }
+        InputMode::Config => {
+            "[Config mode] \n Press [s] to sync github repository, Press [q] to quit"
         }
     };
     let instructions_paragraph = Paragraph::new(instructions).style(Style::default());

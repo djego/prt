@@ -28,18 +28,6 @@ fn main() -> Result<(), io::Error> {
     if config.is_none() {
         app.show_pat_popup = true;
     }
-    if !app.config_pat.is_empty() {
-        let result = runtime.block_on(app.fetch_github_repo_info());
-
-        match result {
-            Ok(repo) => {
-                app.repo_url = repo.url.to_string();
-            }
-            Err(e) => {
-                app.set_error(format!("Error {:?}", e));
-            }
-        }
-    }
 
     loop {
         terminal.draw(|f| ui(f, &app))?;
@@ -76,6 +64,9 @@ fn main() -> Result<(), io::Error> {
                         app.reset();
                         app.clear_success();
                         app.enter_edit_mode(0);
+                    }
+                    KeyCode::Char('c') => {
+                        app.input_mode = InputMode::Config;
                     }
                     KeyCode::Down => {
                         app.current_field = (app.current_field + 1) % 3;
@@ -143,6 +134,30 @@ fn main() -> Result<(), io::Error> {
                     KeyCode::Char('q') => {
                         app.input_mode = InputMode::Normal;
                         app.show_confirm_popup = false;
+                    }
+                    _ => {}
+                },
+                InputMode::Config => match key.code {
+                    KeyCode::Char('q') => {
+                        app.input_mode = InputMode::Normal;
+                    }
+
+                    KeyCode::Char('s') => {
+                        let result = runtime.block_on(app.fetch_github_repo_info());
+                        match result {
+                            Ok(repo) => {
+                                app.repo_url = repo.url.to_string();
+                            }
+                            Err(e) => {
+                                app.set_error(format!("Error {:?}", e));
+                            }
+                        }
+                    }
+                    KeyCode::Down => {
+                        app.current_field = (app.current_field + 1) % 3;
+                    }
+                    KeyCode::Up => {
+                        app.current_field = (app.current_field + 2) % 3;
                     }
                     _ => {}
                 },
