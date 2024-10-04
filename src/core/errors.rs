@@ -10,4 +10,7 @@ pub enum PullRequestError {
 
     #[error("Invalid input: {0}")]
     InvalidInput(String),
+
+    #[error("Repo Not found: {0}")]
+    RepoNotFound(String),
 }

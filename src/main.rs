@@ -22,12 +22,23 @@ fn main() -> Result<(), io::Error> {
     let mut terminal = Terminal::new(backend)?;
 
     let config = load_config();
-
     let mut app = App::new();
     let runtime = tokio::runtime::Runtime::new().unwrap();
 
     if config.is_none() {
         app.show_pat_popup = true;
+    }
+    if !app.config_pat.is_empty() {
+        let result = runtime.block_on(app.fetch_github_repo_info());
+
+        match result {
+            Ok(repo) => {
+                app.repo_url = repo.url.to_string();
+            }
+            Err(e) => {
+                app.set_error(format!("Error {:?}", e));
+            }
+        }
     }
 
     loop {
@@ -107,8 +118,7 @@ fn main() -> Result<(), io::Error> {
                     KeyCode::Enter | KeyCode::Char('y') => {
                         app.input_mode = InputMode::Normal;
                         app.show_confirm_popup = false;
-                        let result = runtime
-                            .block_on(app.create_github_pull_request(app.config_pat.clone()));
+                        let result = runtime.block_on(app.create_github_pull_request());
                         match result {
                             Ok(pr) => {
                                 let url_str = match pr.html_url {

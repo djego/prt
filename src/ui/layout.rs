@@ -36,6 +36,7 @@ pub fn ui(f: &mut Frame, app: &App) {
         .borders(Borders::ALL)
         .border_type(ratatui::widgets::BorderType::Rounded);
     let text = vec![
+        Line::from(Span::raw(format!("URL: {}", app.repo_url))),
         Line::from(Span::raw(format!("Owner: {}", app.repo_owner))),
         Line::from(Span::raw(format!("Repo: {}", app.repo_name))),
         Line::from(Span::raw(format!(

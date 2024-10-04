@@ -1,10 +1,10 @@
+use crate::core::config::load_config;
 use crate::core::errors::PullRequestError;
 use crate::core::git::{get_current_branch, get_repo_info};
 use crate::core::input_mode::InputMode;
 use crate::core::pull_request::PullRequest;
 use octocrab::models::pulls::PullRequest as OctocrabPullRequest;
-use octocrab::Octocrab;
-
+use octocrab::{models::Repository, Octocrab};
 pub struct App {
     pub error_message: Option<String>,
     pub success_message: Option<String>,
@@ -13,6 +13,7 @@ pub struct App {
     pub current_field: usize,
     pub show_confirm_popup: bool,
     pub show_pat_popup: bool,
+    pub repo_url: String,
     pub repo_owner: String,
     pub repo_name: String,
     pub default_target_branch: String,
@@ -26,6 +27,13 @@ impl App {
             None => ("-".to_string(), "-".to_string()),
         };
         let current_branch = get_current_branch().unwrap_or_else(|| "-".to_string());
+
+        let config_pat = load_config()
+            .map(|config| config.github.pat)
+            .unwrap_or_else(|| {
+                String::from("") // Aquí asignas el valor vacío
+            });
+
         App {
             pull_request: PullRequest::new(current_branch.clone()),
             input_mode: InputMode::Normal,
@@ -34,7 +42,8 @@ impl App {
             show_pat_popup: false,
             error_message: None,
             success_message: None,
-            config_pat: String::new(),
+            config_pat,
+            repo_url: String::new(),
             repo_owner,
             repo_name,
             default_target_branch: std::env::var("GITHUB_DEFAULT_TARGET_BRANCH")
@@ -44,8 +53,8 @@ impl App {
 
     pub async fn create_github_pull_request(
         &self,
-        pat: String,
     ) -> Result<OctocrabPullRequest, PullRequestError> {
+        let pat = self.config_pat.clone();
         let octocrab = Octocrab::builder().personal_token(pat).build()?;
         if self.pull_request.source_branch.is_empty() {
             return Err(PullRequestError::InvalidInput(
@@ -125,5 +134,40 @@ impl App {
 
     pub fn clear_success(&mut self) {
         self.success_message = None;
+    }
+
+    pub async fn fetch_github_repo_info(&self) -> Result<Repository, PullRequestError> {
+        let pat = self.config_pat.clone();
+        let octocrab = Octocrab::builder().personal_token(pat).build()?;
+        if self.repo_name.is_empty() {
+            return Err(PullRequestError::InvalidInput(
+                "Repository name is empty".to_string(),
+            ));
+        }
+        if self.repo_owner.is_empty() {
+            return Err(PullRequestError::InvalidInput(
+                "Repository owner is empty".to_string(),
+            ));
+        }
+
+        let repo_result = octocrab
+            .repos(&self.repo_owner, &self.repo_name)
+            .get()
+            .await;
+        match repo_result {
+            Ok(repo) => Ok(repo),
+            Err(e) => {
+                if let octocrab::Error::GitHub { source, .. } = &e {
+                    match source.status_code.as_u16() {
+                        404 => {
+                            return Err(PullRequestError::RepoNotFound(e.to_string()));
+                        }
+                        _ => Err(PullRequestError::ApiError(e)),
+                    }
+                } else {
+                    Err(PullRequestError::ApiError(e))
+                }
+            }
+        }
     }
 }
