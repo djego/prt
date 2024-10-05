@@ -15,9 +15,9 @@ pub fn ui(f: &mut Frame, app: &App) {
         .margin(2)
         .constraints(
             [
-                Constraint::Percentage(15),
+                Constraint::Percentage(20),
                 Constraint::Percentage(50),
-                Constraint::Percentage(30),
+                Constraint::Percentage(25),
                 Constraint::Percentage(5),
             ]
             .as_ref(),
@@ -31,16 +31,19 @@ pub fn ui(f: &mut Frame, app: &App) {
     f.render_widget(block, f.area());
 
     let repository_block = Block::default()
-        .title("Context")
+        .title("Config")
         .padding(Padding::new(1, 0, 1, 0))
-        .borders(Borders::ALL)
-        .border_type(ratatui::widgets::BorderType::Rounded);
+        .borders(Borders::ALL);
     let text = vec![
+        Line::from(Span::raw(format!(
+            "URL: {}",
+            app.github_repository.get_url()
+        ))),
         Line::from(Span::raw(format!("Owner: {}", app.repo_owner))),
         Line::from(Span::raw(format!("Repo: {}", app.repo_name))),
         Line::from(Span::raw(format!(
-            "Target Branch: {}",
-            app.default_target_branch
+            "Default Branch: {}",
+            app.github_repository.get_default_branch()
         ))),
     ];
     let paragraph = Paragraph::new(text)
@@ -66,6 +69,7 @@ pub fn ui(f: &mut Frame, app: &App) {
                 Constraint::Length(1),
                 Constraint::Length(description_height as u16),
                 Constraint::Length(1),
+                Constraint::Length(1),
             ]
             .as_ref(),
         )
@@ -79,6 +83,7 @@ pub fn ui(f: &mut Frame, app: &App) {
         ("Title", &app.pull_request.title),
         ("Description", &app.pull_request.description),
         ("Source Branch", &app.pull_request.source_branch),
+        ("Target Branch", &app.pull_request.target_branch),
     ];
 
     for (i, (name, value)) in fields.iter().enumerate() {
@@ -134,12 +139,13 @@ pub fn ui(f: &mut Frame, app: &App) {
     // Instructions
     let instructions = match app.input_mode {
         InputMode::Normal => {
-            "Press [n] to create PR, [e] to edit PR, [c] to modify context or [q] to quit"
+            "[Normal mode] \n Press [n] to create PR, [e] to edit PR, [s] to sync with GitHub or [q] to quit"
         }
-        InputMode::Editing => "[Editing mode] \n Press [Esc] to exit, [Tab]/[BackTab] to move to next or previous field, [Enter] to send",
+        InputMode::Editing => "[Editing mode] \n Press [Esc] to back, [Tab]/[BackTab] to move to next or previous field, [Enter] to send",
         InputMode::Creating => {
-            "[Creating mode] \n Press [Enter] to confirm, Press [e] to continue editing, Press [q] to quit"
+            "[Confirm mode] \n Press [Enter] to confirm, Press [e] to continue editing, Press [q] to quit"
         }
+
     };
     let instructions_paragraph = Paragraph::new(instructions).style(Style::default());
     f.render_widget(instructions_paragraph, chunks[3]);
@@ -157,7 +163,7 @@ pub fn ui(f: &mut Frame, app: &App) {
         let popup_text = vec![
             Line::from(format!(
                 "Please confirm PR creation from {} to {} ",
-                app.pull_request.source_branch, app.default_target_branch
+                app.pull_request.source_branch, app.pull_request.target_branch
             )),
             Line::from(""),
             Line::from("Press [y] to confirm or [n] to cancel"),

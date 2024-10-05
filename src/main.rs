@@ -22,7 +22,6 @@ fn main() -> Result<(), io::Error> {
     let mut terminal = Terminal::new(backend)?;
 
     let config = load_config();
-
     let mut app = App::new();
     let runtime = tokio::runtime::Runtime::new().unwrap();
 
@@ -67,10 +66,30 @@ fn main() -> Result<(), io::Error> {
                         app.enter_edit_mode(0);
                     }
                     KeyCode::Down => {
-                        app.current_field = (app.current_field + 1) % 3;
+                        app.current_field = (app.current_field + 1) % 4;
                     }
                     KeyCode::Up => {
-                        app.current_field = (app.current_field + 2) % 3;
+                        app.current_field = (app.current_field + 3) % 4;
+                    }
+                    KeyCode::Char('s') => {
+                        let result = runtime.block_on(app.fetch_github_repo_info());
+                        match result {
+                            Ok(repo) => {
+                                if let Some(link) = repo.html_url {
+                                    app.github_repository.set_url(link.to_string());
+                                }
+                                if let Some(branch) = repo.default_branch {
+                                    app.github_repository.set_default_branch(branch.clone());
+                                    app.pull_request.target_branch = branch;
+                                    app.set_success(
+                                        "Repository information fetched successfully!".to_string(),
+                                    );
+                                };
+                            }
+                            Err(e) => {
+                                app.set_error(format!("Error {:?}", e));
+                            }
+                        }
                     }
                     _ => {}
                 },
@@ -96,10 +115,10 @@ fn main() -> Result<(), io::Error> {
                         }
                     }
                     KeyCode::Tab => {
-                        app.current_field = (app.current_field + 1) % 3;
+                        app.current_field = (app.current_field + 1) % 4;
                     }
                     KeyCode::BackTab => {
-                        app.current_field = (app.current_field + 2) % 3;
+                        app.current_field = (app.current_field + 3) % 4;
                     }
                     _ => {}
                 },
@@ -107,8 +126,7 @@ fn main() -> Result<(), io::Error> {
                     KeyCode::Enter | KeyCode::Char('y') => {
                         app.input_mode = InputMode::Normal;
                         app.show_confirm_popup = false;
-                        let result = runtime
-                            .block_on(app.create_github_pull_request(app.config_pat.clone()));
+                        let result = runtime.block_on(app.create_github_pull_request());
                         match result {
                             Ok(pr) => {
                                 let url_str = match pr.html_url {
