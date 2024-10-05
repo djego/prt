@@ -75,7 +75,9 @@ fn main() -> Result<(), io::Error> {
                         let result = runtime.block_on(app.fetch_github_repo_info());
                         match result {
                             Ok(repo) => {
-                                app.github_repository.set_url(repo.url.to_string());
+                                if let Some(link) = repo.html_url {
+                                    app.github_repository.set_url(link.to_string());
+                                }
                                 if let Some(branch) = repo.default_branch {
                                     app.github_repository.set_default_branch(branch.clone());
                                     app.pull_request.target_branch = branch;
