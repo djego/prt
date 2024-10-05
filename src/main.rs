@@ -65,14 +65,29 @@ fn main() -> Result<(), io::Error> {
                         app.clear_success();
                         app.enter_edit_mode(0);
                     }
-                    KeyCode::Char('c') => {
-                        app.input_mode = InputMode::Config;
-                    }
                     KeyCode::Down => {
-                        app.current_field = (app.current_field + 1) % 3;
+                        app.current_field = (app.current_field + 1) % 4;
                     }
                     KeyCode::Up => {
-                        app.current_field = (app.current_field + 2) % 3;
+                        app.current_field = (app.current_field + 3) % 4;
+                    }
+                    KeyCode::Char('s') => {
+                        let result = runtime.block_on(app.fetch_github_repo_info());
+                        match result {
+                            Ok(repo) => {
+                                app.github_repository.set_url(repo.url.to_string());
+                                if let Some(branch) = repo.default_branch {
+                                    app.github_repository.set_default_branch(branch.clone());
+                                    app.pull_request.target_branch = branch;
+                                    app.set_success(
+                                        "Repository information fetched successfully!".to_string(),
+                                    );
+                                };
+                            }
+                            Err(e) => {
+                                app.set_error(format!("Error {:?}", e));
+                            }
+                        }
                     }
                     _ => {}
                 },
@@ -98,10 +113,10 @@ fn main() -> Result<(), io::Error> {
                         }
                     }
                     KeyCode::Tab => {
-                        app.current_field = (app.current_field + 1) % 3;
+                        app.current_field = (app.current_field + 1) % 4;
                     }
                     KeyCode::BackTab => {
-                        app.current_field = (app.current_field + 2) % 3;
+                        app.current_field = (app.current_field + 3) % 4;
                     }
                     _ => {}
                 },
@@ -134,30 +149,6 @@ fn main() -> Result<(), io::Error> {
                     KeyCode::Char('q') => {
                         app.input_mode = InputMode::Normal;
                         app.show_confirm_popup = false;
-                    }
-                    _ => {}
-                },
-                InputMode::Config => match key.code {
-                    KeyCode::Char('q') => {
-                        app.input_mode = InputMode::Normal;
-                    }
-
-                    KeyCode::Char('s') => {
-                        let result = runtime.block_on(app.fetch_github_repo_info());
-                        match result {
-                            Ok(repo) => {
-                                app.repo_url = repo.url.to_string();
-                            }
-                            Err(e) => {
-                                app.set_error(format!("Error {:?}", e));
-                            }
-                        }
-                    }
-                    KeyCode::Down => {
-                        app.current_field = (app.current_field + 1) % 3;
-                    }
-                    KeyCode::Up => {
-                        app.current_field = (app.current_field + 2) % 3;
                     }
                     _ => {}
                 },

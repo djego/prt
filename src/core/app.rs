@@ -1,6 +1,7 @@
 use crate::core::config::load_config;
 use crate::core::errors::PullRequestError;
 use crate::core::git::{get_current_branch, get_repo_info};
+use crate::core::github::GithubRepository;
 use crate::core::input_mode::InputMode;
 use crate::core::pull_request::PullRequest;
 use octocrab::models::pulls::PullRequest as OctocrabPullRequest;
@@ -13,10 +14,9 @@ pub struct App {
     pub current_field: usize,
     pub show_confirm_popup: bool,
     pub show_pat_popup: bool,
-    pub repo_url: String,
+    pub github_repository: GithubRepository,
     pub repo_owner: String,
     pub repo_name: String,
-    pub default_target_branch: String,
     pub config_pat: String,
 }
 
@@ -30,9 +30,7 @@ impl App {
 
         let config_pat = load_config()
             .map(|config| config.github.pat)
-            .unwrap_or_else(|| {
-                String::from("") // Aquí asignas el valor vacío
-            });
+            .unwrap_or_else(|| String::from(""));
 
         App {
             pull_request: PullRequest::new(current_branch.clone()),
@@ -43,11 +41,9 @@ impl App {
             error_message: None,
             success_message: None,
             config_pat,
-            repo_url: String::new(),
+            github_repository: GithubRepository::new(),
             repo_owner,
             repo_name,
-            default_target_branch: std::env::var("GITHUB_DEFAULT_TARGET_BRANCH")
-                .unwrap_or_else(|_| "main".to_string()),
         }
     }
 
@@ -61,7 +57,7 @@ impl App {
                 "Source branch is empty".to_string(),
             ));
         }
-        if self.default_target_branch.is_empty() {
+        if self.pull_request.target_branch.is_empty() {
             return Err(PullRequestError::InvalidInput(
                 "Target branch is empty".to_string(),
             ));
@@ -72,7 +68,7 @@ impl App {
             .create(
                 &self.pull_request.title,
                 &self.pull_request.source_branch,
-                &self.default_target_branch,
+                &self.pull_request.target_branch,
             )
             .body(&self.pull_request.description)
             .send()
@@ -102,6 +98,7 @@ impl App {
             0 => &mut self.pull_request.title,
             1 => &mut self.pull_request.description,
             2 => &mut self.pull_request.source_branch,
+            3 => &mut self.pull_request.target_branch,
             _ => unreachable!(),
         }
     }
