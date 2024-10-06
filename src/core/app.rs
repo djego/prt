@@ -33,7 +33,7 @@ impl App {
             .unwrap_or_else(|| String::from(""));
 
         App {
-            pull_request: PullRequest::new(current_branch.clone()),
+            pull_request: PullRequest::new(current_branch.clone(), "main".to_string()),
             input_mode: InputMode::Normal,
             current_field: 0,
             show_confirm_popup: false,
@@ -114,23 +114,27 @@ impl App {
     }
 
     pub fn reset(&mut self) {
-        self.pull_request = PullRequest::new(self.pull_request.source_branch.clone());
+        self.pull_request = PullRequest::new(
+            self.pull_request.source_branch.clone(),
+            self.pull_request.target_branch.clone(),
+        );
         self.input_mode = InputMode::Normal;
         self.current_field = 0;
         self.show_confirm_popup = false;
-        self.error_message = None;
+        self.clear_message();
     }
 
-    pub fn set_error(&mut self, error: String) {
-        self.error_message = Some(error);
+    pub fn set_error(&mut self, message: String) {
+        self.error_message = Some(message);
     }
 
     pub fn set_success(&mut self, success: String) {
         self.success_message = Some(success);
     }
 
-    pub fn clear_success(&mut self) {
+    pub fn clear_message(&mut self) {
         self.success_message = None;
+        self.error_message = None;
     }
 
     pub async fn fetch_github_repo_info(&self) -> Result<Repository, PullRequestError> {

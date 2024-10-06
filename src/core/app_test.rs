@@ -65,7 +65,7 @@ mod tests {
         let mut app = App::new();
         app.set_success("Success".to_string());
 
-        app.clear_success();
+        app.clear_message();
 
         assert!(app.success_message.is_none());
     }

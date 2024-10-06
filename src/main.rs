@@ -58,11 +58,12 @@ fn main() -> Result<(), io::Error> {
                 InputMode::Normal => match key.code {
                     KeyCode::Char('q') => break,
                     KeyCode::Char('e') => {
+                        app.clear_message();
                         app.enter_edit_mode(app.current_field);
                     }
                     KeyCode::Char('n') => {
                         app.reset();
-                        app.clear_success();
+                        app.clear_message();
                         app.enter_edit_mode(0);
                     }
                     KeyCode::Down => {

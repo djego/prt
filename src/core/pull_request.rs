@@ -6,12 +6,12 @@ pub struct PullRequest {
 }
 
 impl PullRequest {
-    pub fn new(current_branch: String) -> PullRequest {
+    pub fn new(current_branch: String, target_branch: String) -> PullRequest {
         PullRequest {
             title: String::new(),
             description: String::new(),
             source_branch: current_branch,
-            target_branch: "main".to_string(),
+            target_branch,
         }
     }
 }
