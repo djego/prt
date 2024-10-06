@@ -6,6 +6,7 @@ use crate::core::input_mode::InputMode;
 use crate::core::pull_request::PullRequest;
 use octocrab::models::pulls::PullRequest as OctocrabPullRequest;
 use octocrab::{models::Repository, Octocrab};
+
 use tui_textarea::TextArea;
 pub struct App {
     pub error_message: Option<String>,
@@ -34,6 +35,8 @@ impl App {
             .map(|config| config.github.pat)
             .unwrap_or_else(|| String::from(""));
 
+        let text_area = TextArea::default();
+
         App {
             pull_request: PullRequest::new(current_branch.clone(), "main".to_string()),
             input_mode: InputMode::Normal,
@@ -46,7 +49,7 @@ impl App {
             github_repository: GithubRepository::new(),
             repo_owner,
             repo_name,
-            description_text_area: TextArea::default(),
+            description_text_area: text_area,
         }
     }
 
@@ -125,6 +128,7 @@ impl App {
         self.input_mode = InputMode::Normal;
         self.current_field = 0;
         self.show_confirm_popup = false;
+        self.description_text_area = TextArea::default();
         self.clear_message();
     }
 

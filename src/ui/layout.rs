@@ -62,7 +62,7 @@ pub fn ui(f: &mut Frame, app: &App) {
     f.render_widget(paragraph, repo_area[0]);
 
     let description_lines = app.pull_request.description.lines().count();
-    let description_height = description_lines.min(20) + 2;
+    let description_height = description_lines.min(20) + 3;
     let form_layout = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -70,7 +70,6 @@ pub fn ui(f: &mut Frame, app: &App) {
         .horizontal_margin(2)
         .constraints(
             [
-                Constraint::Length(1),
                 Constraint::Length(1),
                 Constraint::Length(description_height as u16),
                 Constraint::Length(1),
@@ -86,7 +85,6 @@ pub fn ui(f: &mut Frame, app: &App) {
     f.render_widget(form_block, chunks[1]);
     let fields = vec![
         ("Title", &app.pull_request.title),
-        ("Description", &app.pull_request.description),
         ("Description", &app.pull_request.description),
         ("Source Branch", &app.pull_request.source_branch),
         ("Target Branch", &app.pull_request.target_branch),
@@ -113,8 +111,31 @@ pub fn ui(f: &mut Frame, app: &App) {
             InputMode::Creating => (format!("{}: {}", name, value), Style::default()),
         };
 
-        if i == 2 {
-            f.render_widget(&app.description_text_area, form_layout[i]);
+        if i == 1 {
+            let description_layout = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints(
+                    [
+                        Constraint::Length(1),
+                        Constraint::Length(description_height as u16),
+                    ]
+                    .as_ref(),
+                )
+                .split(form_layout[i]);
+
+            let paragraph = Paragraph::new("Description:")
+                .block(Block::default())
+                .style(
+                    if app.input_mode == InputMode::Normal && i == app.current_field {
+                        Style::default().fg(Color::Yellow)
+                    } else if app.input_mode == InputMode::Editing && i == app.current_field {
+                        Style::default().fg(Color::Green)
+                    } else {
+                        Style::default()
+                    },
+                );
+            f.render_widget(paragraph, description_layout[0]);
+            f.render_widget(&app.description_text_area, description_layout[1]);
         } else {
             let paragraph = Paragraph::new(Span::styled(text, style));
             f.render_widget(paragraph, form_layout[i]);
