@@ -85,7 +85,8 @@ fn main() -> Result<(), io::Error> {
                                     app.set_success(
                                         "Repository information fetched successfully!".to_string(),
                                     );
-                                };
+                                }
+                                app.github_repository.set_name(repo.name.clone());
                             }
                             Err(e) => {
                                 app.set_error(format!("Error {:?}", e));
@@ -134,11 +135,11 @@ fn main() -> Result<(), io::Error> {
                                     Some(ref url) => url.to_string(),
                                     None => "No URL available".to_string(),
                                 };
+                                app.reset();
                                 app.set_success(format!(
                                     "Pull request created successfully! \n Url: {}",
                                     url_str
                                 ));
-                                app.reset();
                             }
                             Err(e) => {
                                 app.set_error(format!("Failed to create pull request: {}", e));

@@ -36,6 +36,10 @@ pub fn ui(f: &mut Frame, app: &App) {
         .borders(Borders::ALL);
     let text = vec![
         Line::from(Span::raw(format!(
+            "Name: {}",
+            app.github_repository.get_name()
+        ))),
+        Line::from(Span::raw(format!(
             "URL: {}",
             app.github_repository.get_url()
         ))),
