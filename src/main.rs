@@ -58,11 +58,12 @@ fn main() -> Result<(), io::Error> {
                 InputMode::Normal => match key.code {
                     KeyCode::Char('q') => break,
                     KeyCode::Char('e') => {
+                        app.clear_message();
                         app.enter_edit_mode(app.current_field);
                     }
                     KeyCode::Char('n') => {
                         app.reset();
-                        app.clear_success();
+                        app.clear_message();
                         app.enter_edit_mode(0);
                     }
                     KeyCode::Down => {
@@ -84,7 +85,8 @@ fn main() -> Result<(), io::Error> {
                                     app.set_success(
                                         "Repository information fetched successfully!".to_string(),
                                     );
-                                };
+                                }
+                                app.github_repository.set_name(repo.name.clone());
                             }
                             Err(e) => {
                                 app.set_error(format!("Error {:?}", e));
@@ -133,11 +135,11 @@ fn main() -> Result<(), io::Error> {
                                     Some(ref url) => url.to_string(),
                                     None => "No URL available".to_string(),
                                 };
+                                app.reset();
                                 app.set_success(format!(
                                     "Pull request created successfully! \n Url: {}",
                                     url_str
                                 ));
-                                app.reset();
                             }
                             Err(e) => {
                                 app.set_error(format!("Failed to create pull request: {}", e));

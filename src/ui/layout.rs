@@ -1,7 +1,7 @@
 use crate::ui::util::{centered_rect, inner_area};
 use crate::App;
 use crate::InputMode;
-use ratatui::layout::{Constraint, Direction, Layout};
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Block, Borders, Clear, Padding, Paragraph, Wrap};
 use ratatui::{
@@ -35,6 +35,10 @@ pub fn ui(f: &mut Frame, app: &App) {
         .padding(Padding::new(1, 0, 1, 0))
         .borders(Borders::ALL);
     let text = vec![
+        Line::from(Span::raw(format!(
+            "Name: {}",
+            app.github_repository.get_name()
+        ))),
         Line::from(Span::raw(format!(
             "URL: {}",
             app.github_repository.get_url()
@@ -118,22 +122,13 @@ pub fn ui(f: &mut Frame, app: &App) {
         }
     }
 
-    if let Some(ref error_message) = app.error_message {
-        let error_paragraph = Paragraph::new(Span::from(Span::styled(
-            error_message,
-            Style::default().fg(Color::Red),
-        )))
-        .block(Block::default().borders(Borders::ALL).title("Error"));
-        f.render_widget(error_paragraph, chunks[2]);
-    }
+    render_message(f, "", Color::default(), chunks[2]);
 
+    if let Some(ref error_message) = app.error_message {
+        render_message(f, error_message, Color::Red, chunks[2]);
+    }
     if let Some(ref success_message) = app.success_message {
-        let success_paragraph = Paragraph::new(Text::from(Text::styled(
-            success_message,
-            Style::default().fg(Color::Green),
-        )))
-        .block(Block::default().borders(Borders::ALL).title("Success"));
-        f.render_widget(success_paragraph, chunks[2]);
+        render_message(f, success_message, Color::Green, chunks[2]);
     }
 
     // Instructions
@@ -198,4 +193,14 @@ pub fn ui(f: &mut Frame, app: &App) {
         // Centrar el modal en la pantalla
         f.render_widget(pat_input, inner_area(area));
     }
+}
+
+fn render_message(f: &mut Frame, message: &str, color: Color, area: Rect) {
+    let paragraph = Paragraph::new(Span::from(Span::styled(
+        message,
+        Style::default().fg(color),
+    )))
+    .block(Block::default().borders(Borders::ALL).title("Ouput"));
+
+    f.render_widget(paragraph, area);
 }

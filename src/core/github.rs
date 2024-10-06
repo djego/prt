@@ -1,12 +1,14 @@
 pub struct GithubRepository {
     url: String,
     default_branch: String,
+    name: String,
 }
 
 impl GithubRepository {
     pub fn new() -> GithubRepository {
         GithubRepository {
             url: String::new(),
+            name: String::new(),
             default_branch: String::new(),
         }
     }
@@ -23,5 +25,12 @@ impl GithubRepository {
     }
     pub fn get_default_branch(&self) -> &String {
         &self.default_branch
+    }
+
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+    pub fn get_name(&self) -> &String {
+        &self.name
     }
 }
