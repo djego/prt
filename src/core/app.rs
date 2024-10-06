@@ -6,8 +6,8 @@ use crate::core::input_mode::InputMode;
 use crate::core::pull_request::PullRequest;
 use octocrab::models::pulls::PullRequest as OctocrabPullRequest;
 use octocrab::{models::Repository, Octocrab};
-
 use tui_textarea::TextArea;
+
 pub struct App {
     pub error_message: Option<String>,
     pub success_message: Option<String>,
@@ -76,7 +76,6 @@ impl App {
                 &self.pull_request.source_branch,
                 &self.pull_request.target_branch,
             )
-            .draft(true)
             .body(&self.pull_request.description)
             .send()
             .await;

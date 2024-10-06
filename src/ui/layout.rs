@@ -110,32 +110,35 @@ pub fn ui(f: &mut Frame, app: &App) {
             ),
             InputMode::Creating => (format!("{}: {}", name, value), Style::default()),
         };
+        let mut description_text = app.description_text_area.clone();
+        description_text.set_cursor_style(Style::default().fg(Color::Red));
+        if app.input_mode == InputMode::Normal && i == app.current_field {
+            description_text.set_block(
+                Block::default()
+                    .title("Description")
+                    .style(Style::default().fg(Color::Yellow)),
+            );
+        } else if app.input_mode == InputMode::Editing && i == app.current_field {
+            description_text.set_block(
+                Block::default()
+                    .title("Description")
+                    .style(Style::default().fg(Color::Green)),
+            );
+            description_text.set_cursor_style(
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(ratatui::style::Modifier::REVERSED),
+            );
+        } else {
+            description_text.set_block(
+                Block::default()
+                    .title("Description")
+                    .style(Style::default()),
+            );
+        }
 
         if i == 1 {
-            let description_layout = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints(
-                    [
-                        Constraint::Length(1),
-                        Constraint::Length(description_height as u16),
-                    ]
-                    .as_ref(),
-                )
-                .split(form_layout[i]);
-
-            let paragraph = Paragraph::new("Description:")
-                .block(Block::default())
-                .style(
-                    if app.input_mode == InputMode::Normal && i == app.current_field {
-                        Style::default().fg(Color::Yellow)
-                    } else if app.input_mode == InputMode::Editing && i == app.current_field {
-                        Style::default().fg(Color::Green)
-                    } else {
-                        Style::default()
-                    },
-                );
-            f.render_widget(paragraph, description_layout[0]);
-            f.render_widget(&app.description_text_area, description_layout[1]);
+            f.render_widget(&description_text, form_layout[i]);
         } else {
             let paragraph = Paragraph::new(Span::styled(text, style));
             f.render_widget(paragraph, form_layout[i]);
