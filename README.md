@@ -4,6 +4,18 @@
 TUI for managing pull requests on GitHub.
 
 ## Installation
+Go to releases and download the latest version for your platform.
+
+```
+chmod a+x prt
+sudo mv prt /usr/local/bin
+```
+
+## Usage
+You should have a GitHub token in order to use this application (PAT)
+
+You can create one [here](https://github.com/settings/tokens).
+
 
 ## Development
 
@@ -12,19 +24,13 @@ For easy development, first clone the repository:
 git clone https://github.com/djego/prt.git
 cd prt
 ````
-
-Then, create a `.env` file with the following content:
+Then, install the following dependencies and execute application:
 ````bash
-GITHUB_TOKEN=your_github_token
-GITHUB_DEFAULT_TARGET_BRANCH=your_github_default_target_branch # if not set, it will be 'main'
-````
-Finally, use the following commands:
-````rust
-cargo updatae
+cargo update
 cargo run
 ````
 
 ## Demo
-[![asciicast](https://asciinema.org/a/677701.svg)](https://asciinema.org/a/677701)
+[![asciicast](https://asciinema.org/a/679322.svg)](https://asciinema.org/a/679322)
 
-Happy coding!
+Enjoy creating pull requests with ease!
