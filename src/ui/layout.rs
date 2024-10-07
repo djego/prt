@@ -2,8 +2,8 @@ use crate::ui::util::{centered_rect, inner_area};
 use crate::App;
 use crate::InputMode;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::text::{Line, Span, Text};
-use ratatui::widgets::{Block, Borders, Clear, Padding, Paragraph, Wrap};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Borders, Clear, Padding, Paragraph};
 use ratatui::{
     style::{Color, Style},
     Frame,
@@ -62,7 +62,7 @@ pub fn ui(f: &mut Frame, app: &App) {
     f.render_widget(paragraph, repo_area[0]);
 
     let description_lines = app.pull_request.description.lines().count();
-    let description_height = description_lines.min(20) + 2;
+    let description_height = description_lines.min(20) + 3;
     let form_layout = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -110,12 +110,35 @@ pub fn ui(f: &mut Frame, app: &App) {
             ),
             InputMode::Creating => (format!("{}: {}", name, value), Style::default()),
         };
+        let mut description_text = app.description_text_area.clone();
+        description_text.set_cursor_style(Style::default().fg(Color::Red));
+        if app.input_mode == InputMode::Normal && i == app.current_field {
+            description_text.set_block(
+                Block::default()
+                    .title("Description")
+                    .style(Style::default().fg(Color::Yellow)),
+            );
+        } else if app.input_mode == InputMode::Editing && i == app.current_field {
+            description_text.set_block(
+                Block::default()
+                    .title("Description")
+                    .style(Style::default().fg(Color::Green)),
+            );
+            description_text.set_cursor_style(
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(ratatui::style::Modifier::REVERSED),
+            );
+        } else {
+            description_text.set_block(
+                Block::default()
+                    .title("Description")
+                    .style(Style::default()),
+            );
+        }
 
         if i == 1 {
-            let paragraph = Paragraph::new(Text::from(text).style(style))
-                .block(Block::default())
-                .wrap(Wrap { trim: true });
-            f.render_widget(paragraph, form_layout[i]);
+            f.render_widget(&description_text, form_layout[i]);
         } else {
             let paragraph = Paragraph::new(Span::styled(text, style));
             f.render_widget(paragraph, form_layout[i]);

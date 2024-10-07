@@ -100,18 +100,27 @@ fn main() -> Result<(), io::Error> {
                         app.input_mode = InputMode::Normal;
                     }
                     KeyCode::Char(c) => {
-                        let current_field = app.get_current_field_mut();
-                        current_field.push(c);
+                        if app.is_editing_description() {
+                            app.description_text_area.input(key);
+                        } else {
+                            let current_field = app.get_current_field_mut();
+                            current_field.push(c);
+                        }
                     }
                     KeyCode::Backspace => {
-                        let current_field = app.get_current_field_mut();
-                        current_field.pop();
+                        if app.is_editing_description() {
+                            app.description_text_area.input(key);
+                        } else {
+                            let current_field = app.get_current_field_mut();
+                            current_field.pop();
+                        }
                     }
                     KeyCode::Enter => {
                         let current_field_index = app.current_field;
                         let current_field = app.get_current_field_mut();
                         if current_field_index == 1 {
                             current_field.push('\n');
+                            app.description_text_area.input(key);
                         } else {
                             app.confirm_pull_request();
                         }
@@ -128,6 +137,8 @@ fn main() -> Result<(), io::Error> {
                     KeyCode::Enter | KeyCode::Char('y') => {
                         app.input_mode = InputMode::Normal;
                         app.show_confirm_popup = false;
+                        app.pull_request.description = app.description_text_area.lines().join("\n");
+
                         let result = runtime.block_on(app.create_github_pull_request());
                         match result {
                             Ok(pr) => {
