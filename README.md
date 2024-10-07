@@ -31,6 +31,6 @@ cargo run
 ````
 
 ## Demo
-[![asciicast](https://asciinema.org/a/679322.svg)](https://asciinema.org/a/679322)
+![demo](https://github.com/user-attachments/assets/19c12b1e-17db-4781-a014-5e3492f32266)
 
 Enjoy creating pull requests with ease!
