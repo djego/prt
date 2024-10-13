@@ -9,12 +9,10 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use dotenv::dotenv;
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
 
 fn main() -> Result<(), io::Error> {
-    dotenv().ok();
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen)?;

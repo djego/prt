@@ -213,7 +213,6 @@ pub fn ui(f: &mut Frame, app: &App) {
             )
             .style(Style::default().bg(Color::White).fg(Color::Black));
 
-        // Centrar el modal en la pantalla
         f.render_widget(pat_input, inner_area(area));
     }
 }
@@ -223,7 +222,7 @@ fn render_message(f: &mut Frame, message: &str, color: Color, area: Rect) {
         message,
         Style::default().fg(color),
     )))
-    .block(Block::default().borders(Borders::ALL).title("Ouput"));
+    .block(Block::default().borders(Borders::ALL).title("Output"));
 
     f.render_widget(paragraph, area);
 }

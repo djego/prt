@@ -179,7 +179,6 @@ impl App {
         }
     }
     pub fn is_editing_description(&self) -> bool {
-        // Asumiendo que 1 es el índice para el campo 'description'
         self.current_field == 1
     }
 }
