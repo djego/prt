@@ -2,18 +2,15 @@
 mod tests {
     use crate::core::app::App;
     use crate::core::input_mode::InputMode;
-    use std::env;
 
     #[test]
     fn test_app_initialization() {
-        //let (repo_owner, repo_name) = mock_get_repo_info().unwrap();
-        env::set_var("GITHUB_DEFAULT_TARGET_BRANCH", "main");
         let app = App::new();
 
         //assert_eq!(app.repo_owner, repo_owner);
         //assert_eq!(app.repo_name, repo_name);
         assert_eq!(app.pull_request.target_branch, "main");
-        assert!(app.pull_request.title.is_empty()); // asumiendo que title se inicializa vacío
+        assert!(app.pull_request.title.is_empty());
         assert!(app.pull_request.description.is_empty());
     }
 
