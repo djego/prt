@@ -38,9 +38,30 @@ fn main() -> Result<(), io::Error> {
                     KeyCode::Enter => {
                         if !app.pat_input.is_empty() {
                             app.config_pat = app.pat_input.lines().join("\n");
-                            save_config(&app.config_pat).expect("Failed to save the configuration");
-                            app.show_pat_popup = false;
-                            app.set_success("PAT saved!".to_string());
+                            let result = runtime.block_on(app.fetch_github_repo_info());
+                            app.clear_message();
+                            match result {
+                                Ok(repo) => {
+                                    if let Some(link) = repo.html_url {
+                                        app.github_repository.set_url(link.to_string());
+                                    }
+                                    if let Some(branch) = repo.default_branch {
+                                        app.github_repository.set_default_branch(branch.clone());
+                                        app.pull_request.target_branch = branch;
+                                        app.set_success(
+                                            "PAT saved and validated successfully ✅".to_string(),
+                                        );
+                                    }
+
+                                    app.show_pat_popup = false;
+                                    app.github_repository.set_name(repo.name.clone());
+                                    save_config(&app.config_pat)
+                                        .expect("Failed to save the configuration");
+                                }
+                                Err(e) => {
+                                    app.set_error(format!("Error {:?}", e));
+                                }
+                            }
                         } else {
                             app.set_error("PAT cannot be empty!".to_string());
                         }
@@ -55,7 +76,7 @@ fn main() -> Result<(), io::Error> {
 
             match app.input_mode {
                 InputMode::Normal => match key.code {
-                    KeyCode::Char('q') => break,
+                    KeyCode::Esc => break,
                     KeyCode::Char('e') => {
                         app.clear_message();
                         app.enter_edit_mode(app.current_field);
@@ -159,7 +180,7 @@ fn main() -> Result<(), io::Error> {
                         app.input_mode = InputMode::Editing;
                         app.show_confirm_popup = false;
                     }
-                    KeyCode::Char('q') => {
+                    KeyCode::Esc => {
                         app.input_mode = InputMode::Normal;
                         app.show_confirm_popup = false;
                     }

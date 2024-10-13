@@ -157,11 +157,11 @@ pub fn ui(f: &mut Frame, app: &App) {
     // Instructions
     let instructions = match app.input_mode {
         InputMode::Normal => {
-            "[Normal mode] \n Press [n] to create PR, [e] to edit PR, [s] to sync with GitHub or [q] to quit"
+            "[Normal mode] \n Press [n] to create PR, [s] to sync with GitHub or [Esc] to quit"
         }
-        InputMode::Editing => "[Editing mode] \n Press [Esc] to back, [Tab]/[BackTab] to move to next or previous field, [Enter] to send",
+        InputMode::Editing => "[Editing mode] \n Press [Tab]/[BackTab] to move to next or previous field, [Enter] to send or [Esc] to back",
         InputMode::Creating => {
-            "[Confirm mode] \n Press [Enter] to confirm, Press [e] to continue editing, Press [q] to quit"
+            "[Confirm mode] \n Press [Enter] to confirm, Press [e] to continue editing, Press [Esc] to cancel"
         }
 
     };
@@ -174,7 +174,7 @@ pub fn ui(f: &mut Frame, app: &App) {
             .borders(Borders::ALL)
             .style(Style::default());
 
-        let area = centered_rect(35, 12, f.area());
+        let area = centered_rect(60, 12, f.area());
         f.render_widget(Clear, area);
         f.render_widget(popup_block, area);
 
