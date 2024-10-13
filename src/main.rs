@@ -32,22 +32,23 @@ fn main() -> Result<(), io::Error> {
         if let Event::Key(key) = event::read()? {
             if app.show_pat_popup {
                 match key.code {
-                    KeyCode::Char(c) => {
-                        app.config_pat.push(c);
-                    }
                     KeyCode::Backspace => {
-                        app.config_pat.pop();
+                        app.pat_input.input(key);
                     }
                     KeyCode::Enter => {
-                        if !app.config_pat.is_empty() {
+                        if !app.pat_input.is_empty() {
+                            app.config_pat = app.pat_input.lines().join("\n");
                             save_config(&app.config_pat).expect("Failed to save the configuration");
                             app.show_pat_popup = false;
+                            app.set_success("PAT saved!".to_string());
                         } else {
                             app.set_error("PAT cannot be empty!".to_string());
                         }
                     }
                     KeyCode::Esc => break,
-                    _ => {}
+                    _ => {
+                        app.pat_input.input(key);
+                    }
                 }
                 continue;
             }
@@ -114,9 +115,8 @@ fn main() -> Result<(), io::Error> {
                         }
                     }
                     KeyCode::Enter => {
-                        let current_field_index = app.current_field;
-                        let current_field = app.get_current_field_mut();
-                        if current_field_index == 1 {
+                        if app.is_editing_description() {
+                            let current_field = app.get_current_field_mut();
                             current_field.push('\n');
                             app.description_text_area.input(key);
                         } else {

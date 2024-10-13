@@ -21,6 +21,7 @@ pub struct App {
     pub repo_name: String,
     pub config_pat: String,
     pub description_text_area: TextArea<'static>,
+    pub pat_input: TextArea<'static>,
 }
 
 impl App {
@@ -36,6 +37,7 @@ impl App {
             .unwrap_or_else(|| String::from(""));
 
         let text_area = TextArea::default();
+        let pat_input = TextArea::default();
 
         App {
             pull_request: PullRequest::new(current_branch.clone(), "main".to_string()),
@@ -50,6 +52,7 @@ impl App {
             repo_owner,
             repo_name,
             description_text_area: text_area,
+            pat_input,
         }
     }
 

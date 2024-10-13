@@ -195,25 +195,24 @@ pub fn ui(f: &mut Frame, app: &App) {
     }
 
     if app.show_pat_popup {
-        let area = centered_rect(50, 15, f.area());
+        let area = centered_rect(50, 10, f.area());
         f.render_widget(Clear, area);
-
-        let popup_text = vec![
-            Line::from(app.config_pat.as_str())
-                .style(Style::default().bg(Color::Black).fg(Color::White)),
-            Line::from(""),
-            Line::from("Press [enter] to confirm or [esc] to cancel"),
-        ];
-
-        let pat_input = Paragraph::new(popup_text)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Enter you Github PAT:"),
-            )
-            .style(Style::default().bg(Color::White).fg(Color::Black));
-
-        f.render_widget(pat_input, inner_area(area));
+        let mut pat_input_text = app.pat_input.clone();
+        pat_input_text.set_block(
+            Block::default()
+                .title("Insert Github PAT")
+                .padding(Padding::new(1, 1, 0, 0))
+                .style(Style::default())
+                .borders(Borders::ALL),
+        );
+        pat_input_text.set_cursor_style(
+            Style::default()
+                .fg(Color::Green)
+                .add_modifier(ratatui::style::Modifier::REVERSED),
+        );
+        pat_input_text.set_placeholder_text("Enter your Github PAT here");
+        pat_input_text.set_mask_char('*');
+        f.render_widget(&pat_input_text, inner_area(area));
     }
 }
 
