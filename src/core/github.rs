@@ -30,7 +30,4 @@ impl GithubRepository {
     pub fn set_name(&mut self, name: String) {
         self.name = name;
     }
-    pub fn get_name(&self) -> &String {
-        &self.name
-    }
 }

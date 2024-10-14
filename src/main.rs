@@ -85,6 +85,24 @@ fn main() -> Result<(), io::Error> {
                         app.reset();
                         app.clear_message();
                         app.enter_edit_mode(0);
+                        if app.github_repository.get_url().is_empty() {
+                            let result = runtime.block_on(app.fetch_github_repo_info());
+                            match result {
+                                Ok(repo) => {
+                                    if let Some(link) = repo.html_url {
+                                        app.github_repository.set_url(link.to_string());
+                                    }
+                                    if let Some(branch) = repo.default_branch {
+                                        app.github_repository.set_default_branch(branch.clone());
+                                        app.pull_request.target_branch = branch;
+                                    }
+                                    app.github_repository.set_name(repo.name.clone());
+                                }
+                                Err(e) => {
+                                    app.set_error(format!("Error {:?}", e));
+                                }
+                            }
+                        }
                     }
                     KeyCode::Down => {
                         app.current_field = (app.current_field + 1) % 4;

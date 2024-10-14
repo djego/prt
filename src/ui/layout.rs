@@ -31,20 +31,16 @@ pub fn ui(f: &mut Frame, app: &App) {
     f.render_widget(block, f.area());
 
     let repository_block = Block::default()
-        .title("Config")
+        .title("Github Config")
         .padding(Padding::new(1, 0, 1, 0))
         .borders(Borders::ALL);
     let text = vec![
-        Line::from(Span::raw(format!(
-            "Name: {}",
-            app.github_repository.get_name()
-        ))),
+        Line::from(Span::raw(format!("Owner: {}", app.repo_owner))),
+        Line::from(Span::raw(format!("Repo: {}", app.repo_name))),
         Line::from(Span::raw(format!(
             "URL: {}",
             app.github_repository.get_url()
         ))),
-        Line::from(Span::raw(format!("Owner: {}", app.repo_owner))),
-        Line::from(Span::raw(format!("Repo: {}", app.repo_name))),
         Line::from(Span::raw(format!(
             "Default Branch: {}",
             app.github_repository.get_default_branch()
@@ -157,7 +153,11 @@ pub fn ui(f: &mut Frame, app: &App) {
     // Instructions
     let instructions = match app.input_mode {
         InputMode::Normal => {
-            "[Normal mode] \n Press [n] to create PR, [s] to sync with GitHub or [Esc] to quit"
+            if app.pull_request.description != "" || app.pull_request.title != "" {
+                "[Normal mode] \n Press [s] to sync with GitHub, [n] to create PR, [e] to edit PR or [Esc] to quit"
+            } else {
+                "[Normal mode] \n Press [s] to sync with GitHub, [n] to create PR or [Esc] to quit"
+            }
         }
         InputMode::Editing => "[Editing mode] \n Press [Tab]/[BackTab] to move to next or previous field, [Enter] to send or [Esc] to back",
         InputMode::Creating => {
@@ -174,9 +174,9 @@ pub fn ui(f: &mut Frame, app: &App) {
             .borders(Borders::ALL)
             .style(Style::default());
 
-        let area = centered_rect(60, 12, f.area());
-        f.render_widget(Clear, area);
-        f.render_widget(popup_block, area);
+        let area_confirm_popup = centered_rect(60, 12, f.area());
+        f.render_widget(Clear, area_confirm_popup);
+        f.render_widget(popup_block, area_confirm_popup);
 
         let popup_text = vec![
             Line::from(format!(
@@ -191,11 +191,11 @@ pub fn ui(f: &mut Frame, app: &App) {
             .block(Block::default().borders(Borders::NONE))
             .alignment(ratatui::layout::Alignment::Left);
 
-        f.render_widget(popup_paragraph, inner_area(area));
+        f.render_widget(popup_paragraph, inner_area(area_confirm_popup));
     }
 
     if app.show_pat_popup {
-        let area = centered_rect(50, 10, f.area());
+        let area = centered_rect(50, 15, f.area());
         f.render_widget(Clear, area);
         let mut pat_input_text = app.pat_input.clone();
         pat_input_text.set_block(
