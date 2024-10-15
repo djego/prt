@@ -189,7 +189,7 @@ pub fn ui(f: &mut Frame, app: &App) {
 
         let popup_paragraph = Paragraph::new(popup_text)
             .block(Block::default().borders(Borders::NONE))
-            .alignment(ratatui::layout::Alignment::Left);
+            .alignment(ratatui::layout::Alignment::Center);
 
         f.render_widget(popup_paragraph, inner_area(area_confirm_popup));
     }
@@ -213,6 +213,29 @@ pub fn ui(f: &mut Frame, app: &App) {
         pat_input_text.set_placeholder_text("Enter your Github PAT here");
         pat_input_text.set_mask_char('*');
         f.render_widget(&pat_input_text, inner_area(area));
+    }
+
+    if app.show_exit_popup {
+        let popup_block = Block::default()
+            .title("Exit Confirmation")
+            .borders(Borders::ALL)
+            .style(Style::default());
+
+        let exit_area = centered_rect(40, 12, f.area());
+        f.render_widget(Clear, exit_area);
+        f.render_widget(popup_block, exit_area);
+
+        let popup_text = vec![
+            Line::from(format!("Are you sure you want to exit?")),
+            Line::from(""),
+            Line::from("Press [y] to confirm or [n] to cancel"),
+        ];
+
+        let popup_paragraph = Paragraph::new(popup_text)
+            .block(Block::default().borders(Borders::NONE))
+            .alignment(ratatui::layout::Alignment::Center);
+
+        f.render_widget(popup_paragraph, inner_area(exit_area));
     }
 }
 

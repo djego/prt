@@ -73,10 +73,23 @@ fn main() -> Result<(), io::Error> {
                 }
                 continue;
             }
-
+            if app.show_exit_popup {
+                match key.code {
+                    KeyCode::Char('y') => {
+                        break;
+                    }
+                    KeyCode::Char('n') => {
+                        app.show_exit_popup = false;
+                    }
+                    _ => {}
+                }
+                continue;
+            }
             match app.input_mode {
                 InputMode::Normal => match key.code {
-                    KeyCode::Esc => break,
+                    KeyCode::Esc => {
+                        app.show_exit_popup = true;
+                    }
                     KeyCode::Char('e') => {
                         app.clear_message();
                         app.enter_edit_mode(app.current_field);
