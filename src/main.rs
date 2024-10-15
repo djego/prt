@@ -11,6 +11,24 @@ use crossterm::{
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
+use tokio::runtime::Runtime;
+
+fn sync_github_repo_info(app: &mut App, runtime: &Runtime) -> Result<(), String> {
+    let result = runtime.block_on(app.fetch_github_repo_info());
+    match result {
+        Ok(repo) => {
+            if let Some(link) = repo.html_url {
+                app.github_repository.set_url(link.to_string());
+            }
+            if let Some(branch) = repo.default_branch {
+                app.github_repository.set_default_branch(branch.clone());
+                app.pull_request.target_branch = branch;
+            }
+            Ok(())
+        }
+        Err(e) => Err(format!("Error {:?}", e)),
+    }
+}
 
 fn main() -> Result<(), io::Error> {
     enable_raw_mode()?;
@@ -38,28 +56,16 @@ fn main() -> Result<(), io::Error> {
                     KeyCode::Enter => {
                         if !app.pat_input.is_empty() {
                             app.config_pat = app.pat_input.lines().join("\n");
-                            let result = runtime.block_on(app.fetch_github_repo_info());
                             app.clear_message();
-                            match result {
-                                Ok(repo) => {
-                                    if let Some(link) = repo.html_url {
-                                        app.github_repository.set_url(link.to_string());
-                                    }
-                                    if let Some(branch) = repo.default_branch {
-                                        app.github_repository.set_default_branch(branch.clone());
-                                        app.pull_request.target_branch = branch;
-                                        app.set_success(
-                                            "PAT saved and validated successfully ✅".to_string(),
-                                        );
-                                    }
-
+                            match sync_github_repo_info(&mut app, &runtime) {
+                                Ok(_) => {
                                     app.show_pat_popup = false;
-                                    app.github_repository.set_name(repo.name.clone());
                                     save_config(&app.config_pat)
                                         .expect("Failed to save the configuration");
+                                    app.set_success("PAT saved successfully ✅".to_string());
                                 }
                                 Err(e) => {
-                                    app.set_error(format!("Error {:?}", e));
+                                    app.set_error(e);
                                 }
                             }
                         } else {
@@ -73,10 +79,23 @@ fn main() -> Result<(), io::Error> {
                 }
                 continue;
             }
-
+            if app.show_exit_popup {
+                match key.code {
+                    KeyCode::Char('y') => {
+                        break;
+                    }
+                    KeyCode::Char('n') => {
+                        app.show_exit_popup = false;
+                    }
+                    _ => {}
+                }
+                continue;
+            }
             match app.input_mode {
                 InputMode::Normal => match key.code {
-                    KeyCode::Esc => break,
+                    KeyCode::Esc => {
+                        app.show_exit_popup = true;
+                    }
                     KeyCode::Char('e') => {
                         app.clear_message();
                         app.enter_edit_mode(app.current_field);
@@ -85,22 +104,9 @@ fn main() -> Result<(), io::Error> {
                         app.reset();
                         app.clear_message();
                         app.enter_edit_mode(0);
-                        if app.github_repository.get_url().is_empty() {
-                            let result = runtime.block_on(app.fetch_github_repo_info());
-                            match result {
-                                Ok(repo) => {
-                                    if let Some(link) = repo.html_url {
-                                        app.github_repository.set_url(link.to_string());
-                                    }
-                                    if let Some(branch) = repo.default_branch {
-                                        app.github_repository.set_default_branch(branch.clone());
-                                        app.pull_request.target_branch = branch;
-                                    }
-                                    app.github_repository.set_name(repo.name.clone());
-                                }
-                                Err(e) => {
-                                    app.set_error(format!("Error {:?}", e));
-                                }
+                        if app.github_repository.get_default_branch().is_empty() {
+                            if let Err(e) = sync_github_repo_info(&mut app, &runtime) {
+                                app.set_error(e);
                             }
                         }
                     }
@@ -110,27 +116,16 @@ fn main() -> Result<(), io::Error> {
                     KeyCode::Up => {
                         app.current_field = (app.current_field + 3) % 4;
                     }
-                    KeyCode::Char('s') => {
-                        let result = runtime.block_on(app.fetch_github_repo_info());
-                        match result {
-                            Ok(repo) => {
-                                if let Some(link) = repo.html_url {
-                                    app.github_repository.set_url(link.to_string());
-                                }
-                                if let Some(branch) = repo.default_branch {
-                                    app.github_repository.set_default_branch(branch.clone());
-                                    app.pull_request.target_branch = branch;
-                                    app.set_success(
-                                        "Repository information fetched successfully!".to_string(),
-                                    );
-                                }
-                                app.github_repository.set_name(repo.name.clone());
-                            }
-                            Err(e) => {
-                                app.set_error(format!("Error {:?}", e));
-                            }
+                    KeyCode::Char('s') => match sync_github_repo_info(&mut app, &runtime) {
+                        Ok(_) => {
+                            app.set_success(
+                                "Repository has been synced successfully ✅".to_string(),
+                            );
                         }
-                    }
+                        Err(e) => {
+                            app.set_error(e);
+                        }
+                    },
                     _ => {}
                 },
                 InputMode::Editing => match key.code {
@@ -185,7 +180,7 @@ fn main() -> Result<(), io::Error> {
                                 };
                                 app.reset();
                                 app.set_success(format!(
-                                    "Pull request created successfully! \n Url: {}",
+                                    "Pull request created successfully ✅\n Url: {}",
                                     url_str
                                 ));
                             }
