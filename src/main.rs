@@ -180,7 +180,7 @@ fn main() -> Result<(), io::Error> {
                                 };
                                 app.reset();
                                 app.set_success(format!(
-                                    "Pull request created successfully! \n Url: {}",
+                                    "Pull request created successfully ✅\n Url: {}",
                                     url_str
                                 ));
                             }

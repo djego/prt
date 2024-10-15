@@ -147,7 +147,7 @@ pub fn ui(f: &mut Frame, app: &App) {
         render_message(f, error_message, Color::Red, chunks[2]);
     }
     if let Some(ref success_message) = app.success_message {
-        render_message(f, success_message, Color::Green, chunks[2]);
+        render_message(f, success_message, Color::default(), chunks[2]);
     }
 
     // Instructions
@@ -244,7 +244,12 @@ fn render_message(f: &mut Frame, message: &str, color: Color, area: Rect) {
         message,
         Style::default().fg(color),
     )))
-    .block(Block::default().borders(Borders::ALL).title("Output"));
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title("Output")
+            .padding(Padding::new(1, 0, 1, 0)),
+    );
 
     f.render_widget(paragraph, area);
 }
