@@ -48,6 +48,6 @@ cargo run
 ````
 
 ## Demo
-![demo](https://github.com/user-attachments/assets/19c12b1e-17db-4781-a014-5e3492f32266)
+![prt demo](https://github.com/user-attachments/assets/dda30cbf-7e9f-47fe-b091-dbb1d630d4a8)
 
 Enjoy creating pull requests from TUI with PRT 🚀!!
