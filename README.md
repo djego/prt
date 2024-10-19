@@ -4,6 +4,17 @@
 TUI for managing pull requests on GitHub.
 
 ## Installation
+
+### Using Homebrew
+
+Just tap the repository and install the application.
+```
+brew tap djego/prt
+brew install prt
+```
+
+### build from source
+
 Go to releases and download the latest version for your platform.
 
 ```
@@ -12,10 +23,16 @@ sudo mv prt /usr/local/bin
 ```
 
 ## Usage
+
 You should have a GitHub token in order to use this application (PAT)
 
 You can create one [here](https://github.com/settings/tokens).
 
+After that, you can run the application with the following command:
+````bash
+prt
+````
+Insert PAT and you are ready to go!
 
 ## Development
 
@@ -33,4 +50,4 @@ cargo run
 ## Demo
 ![demo](https://github.com/user-attachments/assets/19c12b1e-17db-4781-a014-5e3492f32266)
 
-Enjoy creating pull requests with ease!
+Enjoy creating pull requests from TUI with PRT 🚀!!
