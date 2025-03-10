@@ -24,7 +24,12 @@ fn parse_git_url(url: &str) -> Option<(&str, &str)> {
         let parts: Vec<&str> = url.rsplitn(2, '/').collect();
         if parts.len() == 2 {
             let repo = parts[0].trim_end_matches(".git");
-            let owner = parts[1].rsplitn(2, ':').collect::<Vec<&str>>()[0];
+
+            let owner = if parts[1].contains("//") {
+                parts[1].rsplitn(2, '/').collect::<Vec<&str>>()[0]
+            } else {
+                parts[1].rsplitn(2, ':').collect::<Vec<&str>>()[0]
+            };
             return Some((owner, repo));
         }
     }
