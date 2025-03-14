@@ -5,10 +5,10 @@ edition = "2021"
 
 [dependencies]
 crossterm = "0.28.1"
-octocrab = "0.40.0"
-ratatui = "0.28.1"
+octocrab = "0.43.0"
+ratatui = "0.29.0"
 serde = { version = "1.0", features = ["derive"] }
-thiserror = "1.0.64"
+thiserror = "2.0.12"
 tokio = { version = "1.40.0", features = ["full"] }
 toml = "0.8.19"
-tui-textarea = "0.6.1"
+tui-textarea = "0.7.0"
