@@ -2,9 +2,14 @@
 mod tests {
     use crate::core::app::App;
     use crate::core::input_mode::InputMode;
+    use crate::core::git::{get_current_branch, get_repo_info};
 
     #[test]
     fn test_app_initialization() {
+        // Determine expected values from git or defaults
+        let (expected_owner, expected_repo) = get_repo_info().unwrap_or_else(|| ("-".to_string(), "-".to_string()));
+        let expected_branch = get_current_branch().unwrap_or_else(|| "-".to_string());
+
         let app = App::new();
 
         // Existing checks
@@ -12,10 +17,12 @@ mod tests {
         assert!(app.pull_request.title.is_empty(), "Initial PR title should be empty");
         assert!(app.pull_request.description.is_empty(), "Initial PR description should be empty");
 
-        // New assertions based on expected initial state in a test environment
-        assert_eq!(app.repo_owner, "-", "Default repo_owner should be '-' in test env");
-        assert_eq!(app.repo_name, "-", "Default repo_name should be '-' in test env");
-        assert_eq!(app.pull_request.source_branch, "-", "Default source_branch should be '-' in test env");
+        // Updated assertions for repo owner, name, and source branch
+        assert_eq!(app.repo_owner, expected_owner, "Repo owner should match git config or default");
+        assert_eq!(app.repo_name, expected_repo, "Repo name should match git config or default");
+        assert_eq!(app.pull_request.source_branch, expected_branch, "Source branch should match git branch or default");
+
+        // Other existing assertions
         assert_eq!(app.config_pat, "", "Initial config_pat should be an empty string");
         assert_eq!(app.input_mode, InputMode::Normal, "Initial input_mode should be Normal");
         assert_eq!(app.current_field, 0, "Initial current_field should be 0");
