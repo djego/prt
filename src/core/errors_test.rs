@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod tests {
     use crate::core::errors::PullRequestError;
-    use octocrab::models::GitHubError;
+    use octocrab::GitHubError;
+    use reqwest::Error as ReqwestError;
+    use std::backtrace::Backtrace;
 
     #[test]
     fn test_api_error_display() {
@@ -74,7 +76,7 @@ mod tests {
         };
         let octocrab_error = octocrab::Error::GitHub {
             source: Box::new(github_err_source.clone()),
-            backtrace: None, // Simplified
+            backtrace: Backtrace::disabled(),
         };
         let pr_error: PullRequestError = octocrab_error.into();
 
@@ -101,20 +103,24 @@ mod tests {
         // This is a bit indirect; reqwest::Error::from() typically takes a reqwest::error::ErrorImpl.
         // For testing, we might need to simulate a more realistic reqwest error or accept some limitations.
         // A simple way for testing display is to ensure it captures the underlying error's string form.
-        let base_reqwest_error = reqwest::Error::builder().source(io_error).build();
+        let simulated_reqwest_error =
+            ReqwestError::from(std::io::Error::new(std::io::ErrorKind::Other, "network error"));
 
-        let octocrab_error = octocrab::Error::Http {
-            source: base_reqwest_error,
-            backtrace: None,
+        let octocrab_error_instance = octocrab::Error::Http {
+            source: simulated_reqwest_error,
+            backtrace: Backtrace::disabled(),
         };
 
-        let pr_error: PullRequestError = octocrab_error.into();
+        let pr_error: PullRequestError = octocrab_error_instance.into();
 
         // The Display for PullRequestError::ApiError when source is None (because Http is not GitHubError)
         // should use the octocrab_error.to_string() as the message.
+        // Recreate the error for consistent string comparison
+        let comparison_reqwest_error =
+            ReqwestError::from(std::io::Error::new(std::io::ErrorKind::Other, "network error"));
         let expected_message = format!("{}", octocrab_error_to_string_for_comparison(&octocrab::Error::Http {
-            source: reqwest::Error::from(std::io::Error::new(std::io::ErrorKind::Other, "network error")), // Recreate for comparison string
-            backtrace: None,
+            source: comparison_reqwest_error,
+            backtrace: Backtrace::disabled(),
         }));
 
         let expected_display_string = format!(
@@ -132,13 +138,9 @@ mod tests {
 
     // Helper function to manage the reqwest error string comparison, as direct creation is tricky
     fn octocrab_error_to_string_for_comparison(err: &octocrab::Error) -> String {
-        match err {
-            octocrab::Error::Http { source, .. } => {
-                // Simulate how octocrab might stringify its Http error.
-                // This is an approximation.
-                format!("http error: {}", source)
-            }
-            _ => err.to_string(),
-        }
+        // This helper should ideally match how octocrab::Error's Display trait works for Http errors.
+        // For now, we'll keep it simple, but for full accuracy, one might need to inspect octocrab's source.
+        // The primary goal is that *our* PullRequestError::ApiError correctly incorporates this string.
+        err.to_string()
     }
 }
