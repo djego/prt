@@ -2,16 +2,37 @@
 mod tests {
     use crate::core::app::App;
     use crate::core::input_mode::InputMode;
+    use crate::core::git::{get_current_branch, get_repo_info};
 
     #[test]
     fn test_app_initialization() {
+        // Determine expected values from git or defaults
+        let (expected_owner, expected_repo) = get_repo_info().unwrap_or_else(|| ("-".to_string(), "-".to_string()));
+        let expected_branch = get_current_branch().unwrap_or_else(|| "-".to_string());
+
         let app = App::new();
 
-        //assert_eq!(app.repo_owner, repo_owner);
-        //assert_eq!(app.repo_name, repo_name);
-        assert_eq!(app.pull_request.target_branch, "main");
-        assert!(app.pull_request.title.is_empty());
-        assert!(app.pull_request.description.is_empty());
+        // Existing checks
+        assert_eq!(app.pull_request.target_branch, "main", "Default target branch should be main");
+        assert!(app.pull_request.title.is_empty(), "Initial PR title should be empty");
+        assert!(app.pull_request.description.is_empty(), "Initial PR description should be empty");
+
+        // Updated assertions for repo owner, name, and source branch
+        assert_eq!(app.repo_owner, expected_owner, "Repo owner should match git config or default");
+        assert_eq!(app.repo_name, expected_repo, "Repo name should match git config or default");
+        assert_eq!(app.pull_request.source_branch, expected_branch, "Source branch should match git branch or default");
+
+        // Other existing assertions
+        assert_eq!(app.config_pat, "", "Initial config_pat should be an empty string");
+        assert_eq!(app.input_mode, InputMode::Normal, "Initial input_mode should be Normal");
+        assert_eq!(app.current_field, 0, "Initial current_field should be 0");
+        assert!(!app.show_confirm_popup, "show_confirm_popup should be false initially");
+        assert!(!app.show_pat_popup, "show_pat_popup should be false initially");
+        assert!(!app.show_exit_popup, "show_exit_popup should be false initially");
+        assert!(app.error_message.is_none(), "Initial error_message should be None");
+        assert!(app.success_message.is_none(), "Initial success_message should be None");
+        assert!(app.description_text_area.is_empty(), "Initial description_text_area should be empty");
+        assert!(app.pat_input.is_empty(), "Initial pat_input should be empty");
     }
 
     #[test]
@@ -26,16 +47,29 @@ mod tests {
     #[test]
     fn test_reset_function() {
         let mut app = App::new();
-        app.pull_request.title = "Test Title".to_string();
-        app.set_error("An error occurred".to_string());
 
+        // Setup: Modify fields that should be reset
+        app.pull_request.title = "Test Title".to_string();
+        app.pull_request.description = "Test Description".to_string();
+        app.set_error("An error occurred".to_string());
+        app.set_success("Test Success".to_string());
+        app.description_text_area.insert_str("Initial text in textarea");
+        app.input_mode = InputMode::Editing; // Change from default
+        app.current_field = 1; // Change from default
+        app.show_confirm_popup = true; // Change from default
+
+        // Call the reset function
         app.reset();
 
-        assert!(app.pull_request.title.is_empty());
-        assert!(app.error_message.is_none());
-        assert_eq!(app.input_mode, InputMode::Normal);
-        assert_eq!(app.current_field, 0);
-        assert!(!app.show_confirm_popup);
+        // Assertions: Verify fields are reset to their default/initial states
+        assert!(app.pull_request.title.is_empty(), "PR Title should be empty after reset");
+        assert!(app.pull_request.description.is_empty(), "PR Description should be empty after reset");
+        assert!(app.error_message.is_none(), "Error message should be None after reset");
+        assert!(app.success_message.is_none(), "Success message should be None after reset");
+        assert_eq!(app.input_mode, InputMode::Normal, "Input mode should be Normal after reset");
+        assert_eq!(app.current_field, 0, "Current field should be 0 after reset");
+        assert!(!app.show_confirm_popup, "Show confirm popup should be false after reset");
+        assert!(app.description_text_area.is_empty(), "Description textarea should be empty after reset");
     }
 
     #[test]
@@ -65,5 +99,70 @@ mod tests {
         app.clear_message();
 
         assert!(app.success_message.is_none());
+    }
+
+    #[test]
+    fn test_get_current_field_mut_title() {
+        let mut app = App::new();
+        app.current_field = 0;
+        let title_field = app.get_current_field_mut();
+        *title_field = "New Title".to_string();
+        assert_eq!(app.pull_request.title, "New Title");
+    }
+
+    #[test]
+    fn test_get_current_field_mut_description() {
+        let mut app = App::new();
+        app.current_field = 1;
+        let description_field = app.get_current_field_mut();
+        *description_field = "New Description".to_string();
+        assert_eq!(app.pull_request.description, "New Description");
+    }
+
+    #[test]
+    fn test_get_current_field_mut_source_branch() {
+        let mut app = App::new();
+        app.current_field = 2;
+        let source_branch_field = app.get_current_field_mut();
+        *source_branch_field = "feature/new-branch".to_string();
+        assert_eq!(app.pull_request.source_branch, "feature/new-branch");
+    }
+
+    #[test]
+    fn test_get_current_field_mut_target_branch() {
+        let mut app = App::new();
+        app.current_field = 3;
+        let target_branch_field = app.get_current_field_mut();
+        *target_branch_field = "develop".to_string();
+        assert_eq!(app.pull_request.target_branch, "develop");
+    }
+
+    #[test]
+    fn test_confirm_pull_request() {
+        let mut app = App::new();
+        app.confirm_pull_request();
+
+        assert_eq!(app.input_mode, InputMode::Creating);
+        assert!(app.show_confirm_popup);
+    }
+
+    #[test]
+    fn test_is_editing_description() {
+        let mut app = App::new();
+
+        // Scenario 1: current_field is 1
+        app.current_field = 1;
+        assert!(app.is_editing_description(), "Should be true when current_field is 1");
+
+        // Scenario 2: current_field is not 1
+        app.current_field = 0;
+        assert!(!app.is_editing_description(), "Should be false when current_field is 0");
+
+        app.current_field = 2;
+        assert!(!app.is_editing_description(), "Should be false when current_field is 2");
+        
+        // Test with another value just to be sure
+        app.current_field = 3;
+        assert!(!app.is_editing_description(), "Should be false when current_field is 3");
     }
 }
