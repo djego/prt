@@ -23,7 +23,7 @@ impl From<octocrab::Error> for PullRequestError {
         match error {
             octocrab::Error::GitHub { source, .. } => PullRequestError::ApiError {
                 message: source.message.clone(),
-                source: Some(source),
+                source: Some(*source),
             },
             _ => PullRequestError::ApiError {
                 message: error.to_string(),

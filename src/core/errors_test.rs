@@ -73,7 +73,7 @@ mod tests {
             errors: None,
         };
         let octocrab_error = octocrab::Error::GitHub {
-            source: github_err_source.clone(),
+            source: Box::new(github_err_source.clone()),
             backtrace: None, // Simplified
         };
         let pr_error: PullRequestError = octocrab_error.into();
