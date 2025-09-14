@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+async-trait = "0.1.74"
 crossterm = "0.28.1"
 octocrab = "0.43.0"
 ratatui = "0.29.0"
