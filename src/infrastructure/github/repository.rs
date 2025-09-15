@@ -4,7 +4,6 @@ use crate::domain::services::repository_repository::RepositoryRepository;
 use crate::domain::models::pull_request::{PullRequest, CreatePullRequest, PullRequestStatus, DomainError};
 use crate::domain::models::repository::Repository;
 use crate::infrastructure::github::client::GitHubClient;
-use octocrab::models::Repository as OctocrabRepository;
 
 pub struct GitHubPullRequestRepository {
     client: GitHubClient,
@@ -49,40 +48,41 @@ impl PullRequestRepository for GitHubPullRequestRepository {
                 if let octocrab::Error::GitHub { source, .. } = &e {
                     match source.status_code.as_u16() {
                         422 => {
-                            return Err(DomainError::ValidationError(e.to_string()));
+                            return Err(DomainError::Validation(e.to_string()));
                         }
-                        _ => Err(DomainError::RepositoryError(e.to_string())),
+                        _ => Err(DomainError::Repository(e.to_string())),
                     }
                 } else {
-                    Err(DomainError::RepositoryError(e.to_string()))
+                    Err(DomainError::Repository(e.to_string()))
                 }
             }
         }
     }
 
     async fn get(&self, id: &str) -> Result<PullRequest, DomainError> {
-        let pr_number: u64 = id.parse().map_err(|_| DomainError::ValidationError("Invalid PR ID".to_string()))?;
+        let pr_number: u64 = id.parse().map_err(|_| DomainError::Validation("Invalid PR ID".to_string()))?;
 
         let pr = self.client.get_client()
             .pulls(&self.owner, &self.repo)
             .get(pr_number)
             .await
-            .map_err(|e| DomainError::RepositoryError(e.to_string()))?;
+            .map_err(|e| DomainError::Repository(e.to_string()))?;
 
         let status = match pr.state {
-            octocrab::models::IssueState::Open => PullRequestStatus::Open,
-            octocrab::models::IssueState::Closed => {
+            Some(octocrab::models::IssueState::Open) => PullRequestStatus::Open,
+            Some(octocrab::models::IssueState::Closed) => {
                 if pr.merged_at.is_some() {
                     PullRequestStatus::Merged
                 } else {
                     PullRequestStatus::Closed
                 }
             }
+            _ => PullRequestStatus::Closed,
         };
 
         Ok(PullRequest {
             id: Some(pr.number.to_string()),
-            title: pr.title,
+            title: pr.title.unwrap_or_default(),
             description: pr.body.unwrap_or_default(),
             source_branch: pr.head.ref_field,
             target_branch: pr.base.ref_field,
@@ -97,24 +97,25 @@ impl PullRequestRepository for GitHubPullRequestRepository {
             .list()
             .send()
             .await
-            .map_err(|e| DomainError::RepositoryError(e.to_string()))?;
+            .map_err(|e| DomainError::Repository(e.to_string()))?;
 
         let mut pull_requests = Vec::new();
         for pr in prs.items {
             let status = match pr.state {
-                octocrab::models::IssueState::Open => PullRequestStatus::Open,
-                octocrab::models::IssueState::Closed => {
+                Some(octocrab::models::IssueState::Open) => PullRequestStatus::Open,
+                Some(octocrab::models::IssueState::Closed) => {
                     if pr.merged_at.is_some() {
                         PullRequestStatus::Merged
                     } else {
                         PullRequestStatus::Closed
                     }
                 }
+                _ => PullRequestStatus::Closed,
             };
 
             pull_requests.push(PullRequest {
                 id: Some(pr.number.to_string()),
-                title: pr.title,
+                title: pr.title.unwrap_or_default(),
                 description: pr.body.unwrap_or_default(),
                 source_branch: pr.head.ref_field,
                 target_branch: pr.base.ref_field,
@@ -146,7 +147,7 @@ impl RepositoryRepository for GitHubRepositoryRepository {
             .repos(&self.owner, &self.repo)
             .get()
             .await
-            .map_err(|e| DomainError::RepositoryError(e.to_string()))?;
+            .map_err(|e| DomainError::Repository(e.to_string()))?;
 
         Ok(Repository::new(
             self.owner.clone(),

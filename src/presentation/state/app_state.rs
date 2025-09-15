@@ -19,6 +19,12 @@ pub struct AppState {
     pub config_pat: String,
 }
 
+impl Default for AppState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AppState {
     pub fn new() -> Self {
         let current_branch = "main".to_string(); // Default, will be updated from git
@@ -47,10 +53,11 @@ impl AppState {
     }
 
     pub fn set_repository(&mut self, repo: Repository) {
+        let default_branch = repo.default_branch.clone();
         self.repository = Some(repo);
         // Update pull request target branch if repository has a default branch
-        if !repo.default_branch.is_empty() {
-            self.pull_request.target_branch = repo.default_branch.clone();
+        if !default_branch.is_empty() {
+            self.pull_request.target_branch = default_branch;
         }
     }
 

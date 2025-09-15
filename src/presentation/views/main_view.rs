@@ -105,7 +105,7 @@ fn render_form(f: &mut Frame, app_state: &AppState, area: Rect) {
         .borders(Borders::ALL);
     f.render_widget(form_block, area);
 
-    let fields = vec![
+    let fields = [
         ("Title", &app_state.pull_request.title),
         ("Description", &app_state.pull_request.description),
         ("Source Branch", &app_state.pull_request.source_branch),
@@ -179,10 +179,10 @@ fn render_messages(f: &mut Frame, app_state: &AppState, area: Rect) {
         ("", Color::default())
     };
 
-    let paragraph = Paragraph::new(Span::from(Span::styled(
+    let paragraph = Paragraph::new(Span::styled(
         message.0,
         Style::default().fg(message.1),
-    )))
+    ))
     .block(
         Block::default()
             .borders(Borders::ALL)

@@ -1,7 +1,6 @@
 use crate::application::use_cases::{create_pull_request::CreatePullRequestUseCase, sync_repository::SyncRepositoryUseCase};
 use crate::domain::services::{pull_request_repository::PullRequestRepository, repository_repository::RepositoryRepository, config_repository::ConfigRepository};
-use crate::domain::models::pull_request::{CreatePullRequest, DomainError};
-use crate::domain::models::repository::Repository;
+use crate::domain::models::pull_request::DomainError;
 use crate::infrastructure::github::client::GitHubClient;
 use crate::infrastructure::github::repository::{GitHubPullRequestRepository, GitHubRepositoryRepository};
 use crate::infrastructure::git::repository::GitRepositoryRepository;
@@ -38,6 +37,7 @@ impl<R: PullRequestRepository, RepoR: RepositoryRepository, C: ConfigRepository>
         &self.app_state
     }
 
+    #[allow(dead_code)]
     pub fn get_app_state_mut(&mut self) -> &mut AppState {
         &mut self.app_state
     }
@@ -105,7 +105,7 @@ impl<R: PullRequestRepository, RepoR: RepositoryRepository, C: ConfigRepository>
             KeyCode::Esc => return Ok(true), // Exit
             KeyCode::Char(c) => {
                 // Handle character input manually
-                let mut lines = self.app_state.pat_input.lines();
+                let mut lines: Vec<String> = self.app_state.pat_input.lines().to_vec();
                 if lines.is_empty() {
                     lines.push(c.to_string());
                 } else {
@@ -261,7 +261,7 @@ impl<R: PullRequestRepository, RepoR: RepositoryRepository, C: ConfigRepository>
                 self.app_state.show_confirm_popup = false;
                 self.app_state.pull_request.description = self.app_state.description_text_area.lines().join("\n");
 
-                let request = self.app_state.create_pull_request_request();
+                let _request = self.app_state.create_pull_request_request();
                 // Note: This would need to be async, but we're in a sync context
                 // In a real implementation, this would be handled differently
             }
@@ -293,7 +293,7 @@ pub async fn create_app_controller() -> Result<AppController<
 
     let (app_state, create_pr_use_case, sync_repo_use_case) = if let Some(token) = token.clone() {
         // We have a token, try to initialize GitHub client
-        let github_client = GitHubClient::new(token)?;
+        let github_client = GitHubClient::new(token.clone())?;
 
         // Get repository info from git
         let git_repo = GitRepositoryRepository::new();

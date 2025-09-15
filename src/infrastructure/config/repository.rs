@@ -5,6 +5,12 @@ use crate::infrastructure::config::file_config::Config;
 
 pub struct FileConfigRepository;
 
+impl Default for FileConfigRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FileConfigRepository {
     pub fn new() -> Self {
         Self
@@ -15,10 +21,10 @@ impl FileConfigRepository {
 impl ConfigRepository for FileConfigRepository {
     async fn get_github_token(&self) -> Result<String, DomainError> {
         let config = Config::load()
-            .ok_or_else(|| DomainError::ConfigError("Configuration not found".to_string()))?;
+            .ok_or_else(|| DomainError::Config("Configuration not found".to_string()))?;
 
         if config.github.pat.is_empty() {
-            return Err(DomainError::ConfigError("GitHub token not configured".to_string()));
+            return Err(DomainError::Config("GitHub token not configured".to_string()));
         }
 
         Ok(config.github.pat)
@@ -32,7 +38,7 @@ impl ConfigRepository for FileConfigRepository {
         };
 
         config.save()
-            .map_err(|e| DomainError::ConfigError(format!("Failed to save config: {}", e)))
+            .map_err(|e| DomainError::Config(format!("Failed to save config: {}", e)))
     }
 
     fn get_github_token_sync(&self) -> Option<String> {

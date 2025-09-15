@@ -1,5 +1,5 @@
+use crate::domain::models::pull_request::{CreatePullRequest, DomainError, PullRequest};
 use async_trait::async_trait;
-use crate::domain::models::pull_request::{PullRequest, CreatePullRequest, DomainError};
 
 #[async_trait]
 pub trait PullRequestRepository {

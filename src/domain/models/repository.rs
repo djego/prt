@@ -16,6 +16,7 @@ impl Repository {
         }
     }
 
+    #[allow(dead_code)]
     pub fn full_name(&self) -> String {
         format!("{}/{}", self.owner, self.name)
     }

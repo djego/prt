@@ -4,6 +4,12 @@ use std::str;
 #[derive(Clone)]
 pub struct GitClient;
 
+impl Default for GitClient {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GitClient {
     pub fn new() -> Self {
         Self

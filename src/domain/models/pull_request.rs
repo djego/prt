@@ -1,13 +1,16 @@
 use serde::{Deserialize, Serialize};
+use octocrab;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DomainError {
     #[error("Validation error: {0}")]
-    ValidationError(String),
+    Validation(String),
     #[error("Repository error: {0}")]
-    RepositoryError(String),
+    Repository(String),
     #[error("Configuration error: {0}")]
-    ConfigError(String),
+    Config(String),
+    #[error("GitHub error: {0}")]
+    GitHub(#[from] octocrab::Error),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -42,18 +45,19 @@ impl PullRequest {
         }
     }
 
+    #[allow(dead_code)]
     pub fn validate(&self) -> Result<(), DomainError> {
         if self.title.trim().is_empty() {
-            return Err(DomainError::ValidationError("Title cannot be empty".to_string()));
+            return Err(DomainError::Validation("Title cannot be empty".to_string()));
         }
         if self.source_branch.trim().is_empty() {
-            return Err(DomainError::ValidationError("Source branch cannot be empty".to_string()));
+            return Err(DomainError::Validation("Source branch cannot be empty".to_string()));
         }
         if self.target_branch.trim().is_empty() {
-            return Err(DomainError::ValidationError("Target branch cannot be empty".to_string()));
+            return Err(DomainError::Validation("Target branch cannot be empty".to_string()));
         }
         if self.source_branch == self.target_branch {
-            return Err(DomainError::ValidationError("Source and target branches cannot be the same".to_string()));
+            return Err(DomainError::Validation("Source and target branches cannot be the same".to_string()));
         }
         Ok(())
     }
@@ -79,13 +83,13 @@ impl CreatePullRequest {
 
     pub fn validate(&self) -> Result<(), DomainError> {
         if self.title.trim().is_empty() {
-            return Err(DomainError::ValidationError("Title cannot be empty".to_string()));
+            return Err(DomainError::Validation("Title cannot be empty".to_string()));
         }
         if self.source_branch.trim().is_empty() {
-            return Err(DomainError::ValidationError("Source branch cannot be empty".to_string()));
+            return Err(DomainError::Validation("Source branch cannot be empty".to_string()));
         }
         if self.target_branch.trim().is_empty() {
-            return Err(DomainError::ValidationError("Target branch cannot be empty".to_string()));
+            return Err(DomainError::Validation("Target branch cannot be empty".to_string()));
         }
         Ok(())
     }

@@ -8,6 +8,12 @@ pub struct GitRepositoryRepository {
     git_client: GitClient,
 }
 
+impl Default for GitRepositoryRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GitRepositoryRepository {
     pub fn new() -> Self {
         Self {
@@ -20,7 +26,7 @@ impl GitRepositoryRepository {
 impl RepositoryRepository for GitRepositoryRepository {
     async fn get_info(&self) -> Result<Repository, DomainError> {
         let (owner, repo) = self.git_client.get_repo_info()
-            .ok_or_else(|| DomainError::RepositoryError("Could not get repository info from git".to_string()))?;
+            .ok_or_else(|| DomainError::Repository("Could not get repository info from git".to_string()))?;
 
         let default_branch = self.git_client.get_current_branch()
             .unwrap_or_else(|| "main".to_string());

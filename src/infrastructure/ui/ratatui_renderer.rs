@@ -18,6 +18,7 @@ impl RatatUIRenderer {
         &mut self.terminal
     }
 
+    #[allow(dead_code)]
     pub fn clear(&mut self) -> Result<(), std::io::Error> {
         self.terminal.clear()
     }
