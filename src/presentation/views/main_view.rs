@@ -254,7 +254,7 @@ fn render_confirm_popup(f: &mut Frame, app_state: &AppState) {
 }
 
 fn render_pat_popup(f: &mut Frame, app_state: &AppState) {
-    let area = centered_rect(50, 15, f.area());
+    let area = centered_rect(60, 20, f.area());
     f.render_widget(Clear, area);
     let mut pat_input_text = app_state.pat_input.clone();
     pat_input_text.set_block(
@@ -272,7 +272,7 @@ fn render_pat_popup(f: &mut Frame, app_state: &AppState) {
     pat_input_text.set_placeholder_text("Enter your Github PAT here");
     pat_input_text.set_mask_char('*');
 
-    let inner = centered_rect(48, 13, area);
+    let inner = centered_rect(58, 18, area);
     f.render_widget(&pat_input_text, inner);
 }
 
