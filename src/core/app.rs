@@ -64,14 +64,16 @@ impl App {
         let pat = self.config_pat.clone();
         let octocrab = Octocrab::builder().personal_token(pat).build()?;
         if self.pull_request.source_branch.is_empty() {
-            return Err(PullRequestError::InvalidInput(
-                "Source branch is empty".to_string(),
-            ));
+            return Err(PullRequestError::InvalidInput {
+                field: "source_branch".to_string(),
+                reason: "Source branch is empty".to_string(),
+            });
         }
         if self.pull_request.target_branch.is_empty() {
-            return Err(PullRequestError::InvalidInput(
-                "Target branch is empty".to_string(),
-            ));
+            return Err(PullRequestError::InvalidInput {
+                field: "target_branch".to_string(),
+                reason: "Target branch is empty".to_string(),
+            });
         }
 
         let pr_result = octocrab
@@ -95,10 +97,10 @@ impl App {
                                 e.to_string(),
                             ));
                         }
-                        _ => Err(PullRequestError::ApiError(e)),
+                        _ => Err(e.into()),
                     }
                 } else {
-                    Err(PullRequestError::ApiError(e))
+                    Err(e.into())
                 }
             }
         }
@@ -153,14 +155,16 @@ impl App {
         let pat = self.config_pat.clone();
         let octocrab = Octocrab::builder().personal_token(pat).build()?;
         if self.repo_name.is_empty() {
-            return Err(PullRequestError::InvalidInput(
-                "Repository name is empty".to_string(),
-            ));
+            return Err(PullRequestError::InvalidInput {
+                field: "repo_name".to_string(),
+                reason: "Repository name is empty".to_string(),
+            });
         }
         if self.repo_owner.is_empty() {
-            return Err(PullRequestError::InvalidInput(
-                "Repository owner is empty".to_string(),
-            ));
+            return Err(PullRequestError::InvalidInput {
+                field: "repo_owner".to_string(),
+                reason: "Repository owner is empty".to_string(),
+            });
         }
 
         let repo_result = octocrab
@@ -173,12 +177,14 @@ impl App {
                 if let octocrab::Error::GitHub { source, .. } = &e {
                     match source.status_code.as_u16() {
                         404 => {
-                            return Err(PullRequestError::RepoNotFound(e.to_string()));
+                            return Err(PullRequestError::RepoNotFound {
+                                path: format!("{}/{}", self.repo_owner, self.repo_name),
+                            });
                         }
-                        _ => Err(PullRequestError::ApiError(e)),
+                        _ => Err(e.into()),
                     }
                 } else {
-                    Err(PullRequestError::ApiError(e))
+                    Err(e.into())
                 }
             }
         }
